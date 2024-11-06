@@ -1,0 +1,23 @@
+{
+  "name": "bluedart-clone",
+  "version": "1.0.0",
+  "description": "This project is a basic clone of Bluedart, a courier and logistics service. It includes essential features such as booking shipments, tracking packages, managing delivery schedules, and sending notifications to customers. Additionally, it integrates AWS S3 for document storage and Nodemailer for email notifications.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adityagkmit/bluedart-clone.git"
+  },
+  "author": "\"Aditya Singh Rajawat\"",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/adityagkmit/bluedart-clone/issues"
+  },
+  "homepage": "https://github.com/adityagkmit/bluedart-clone#readme",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1"
+  }
+}
