@@ -2,7 +2,7 @@
   "name": "bluedart-clone",
   "version": "1.0.0",
   "description": "This project is a basic clone of Bluedart, a courier and logistics service. It includes essential features such as booking shipments, tracking packages, managing delivery schedules, and sending notifications to customers. Additionally, it integrates AWS S3 for document storage and Nodemailer for email notifications.",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
