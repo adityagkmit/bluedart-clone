@@ -56,3 +56,18 @@ exports.logout = async (req, res) => {
     res.status(400).json({ message: 'Failed to logout', error });
   }
 };
+
+exports.verifyDocument = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No document uploaded.' });
+    }
+
+    const result = await authService.uploadDocument(req.file, req.user.id);
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error during document upload:', error);
+    res.status(400).json({ message: error.message });
+  }
+};
