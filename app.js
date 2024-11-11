@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const db = require('./src/models');
 const { connectToRedis } = require('./src/config/redis.js');
+const { registerRoutes } = require('./src/routes/index.js');
 
 dotenv.config();
 
@@ -10,6 +11,10 @@ const app = express();
 app.get('/', (req, res) => {
   res.send('Hello Word');
 });
+
+app.use(express.json());
+
+registerRoutes(app);
 
 connectToRedis();
 
