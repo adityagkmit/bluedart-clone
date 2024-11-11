@@ -23,8 +23,6 @@ exports.createUser = async ({ name, email, password, phone_number }) => {
     throw new Error('Customer role not found. Ensure roles are seeded in the database.');
   }
 
-  console.log(customerRole);
-
   // Associate the user with the 'Customer' role
   await user.addRole(customerRole);
 
@@ -32,4 +30,24 @@ exports.createUser = async ({ name, email, password, phone_number }) => {
   await redisClient.del(`${email}_verified`);
 
   return user;
+};
+
+exports.getAllUsers = async () => {
+  const users = await User.findAll({
+    include: {
+      model: Role,
+      through: { attributes: [] }, // Exclude details from the join table
+    },
+  });
+
+  return users.map(user => ({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone_number: user.phone_number,
+    document_url: user.document_url,
+    created_at: user.created_at,
+    updated_at: user.updated_at,
+    roles: user.Roles.map(role => role.name), // Extract role names into an array
+  }));
 };
