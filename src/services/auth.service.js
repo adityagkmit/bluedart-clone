@@ -1,5 +1,6 @@
 const { redisClient } = require('../config/redis');
 const { sendOtpEmail } = require('../utils/email');
+const userService = require('./users.service');
 
 async function sendOtp(email) {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -21,7 +22,19 @@ async function verifyOtp(email, otp) {
   return false;
 }
 
+async function registerUser(payload) {
+  const isVerified = await redisClient.get(`${payload.email}_verified`);
+  if (isVerified !== 'true') {
+    throw new Error('User not verified. Please complete OTP verification.');
+  }
+
+  const user = await userService.createUser(payload);
+
+  return user;
+}
+
 module.exports = {
   sendOtp,
   verifyOtp,
+  registerUser,
 };
