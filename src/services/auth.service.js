@@ -11,6 +11,17 @@ async function sendOtp(email) {
   return { message: 'OTP sent to email' };
 }
 
+async function verifyOtp(email, otp) {
+  const storedOtp = await redisClient.get(email);
+  if (storedOtp && storedOtp === otp) {
+    await redisClient.del(email);
+    await redisClient.setEx(`${email}_verified`, 300, 'true');
+    return true;
+  }
+  return false;
+}
+
 module.exports = {
   sendOtp,
+  verifyOtp,
 };
