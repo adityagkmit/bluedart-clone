@@ -3,7 +3,7 @@ const { sendOtpEmail } = require('../utils/email');
 const { User } = require('../models');
 const userService = require('./users.service');
 const bcrypt = require('bcryptjs');
-const { generateToken } = require('../helpers/jwt.helper');
+const { generateToken, blacklistToken } = require('../helpers/jwt.helper');
 
 async function sendOtp(email) {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -47,9 +47,14 @@ async function loginUser(email, password) {
   return { user, token };
 }
 
+async function logout(token) {
+  await blacklistToken(token);
+}
+
 module.exports = {
   sendOtp,
   verifyOtp,
   registerUser,
   loginUser,
+  logout,
 };

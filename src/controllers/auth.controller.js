@@ -42,3 +42,17 @@ exports.login = async (req, res) => {
     res.status(401).json({ message: 'Invalid credentials', error });
   }
 };
+
+exports.logout = async (req, res) => {
+  const token = req.headers['authorization']?.replace('Bearer ', '');
+  if (!token) {
+    return res.status(400).json({ error: 'Token not provided' });
+  }
+
+  try {
+    await authService.logout(token);
+    res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error) {
+    res.status(400).json({ message: 'Failed to logout', error });
+  }
+};
