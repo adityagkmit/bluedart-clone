@@ -51,3 +51,26 @@ exports.getAllUsers = async () => {
     roles: user.Roles.map(role => role.name), // Extract role names into an array
   }));
 };
+
+exports.getUserById = async userId => {
+  const user = await User.findByPk(userId, {
+    attributes: { exclude: ['password'] },
+    include: {
+      model: Role,
+      through: { attributes: [] },
+    },
+  });
+
+  if (!user) return null;
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone_number: user.phone_number,
+    document_url: user.document_url,
+    created_at: user.created_at,
+    updated_at: user.updated_at,
+    roles: user.Roles.map(role => role.name), // Extract role names into an array
+  };
+};
