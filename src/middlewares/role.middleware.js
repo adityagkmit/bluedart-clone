@@ -1,4 +1,4 @@
-function allowedRoles(requiredRoles) {
+function roles(requiredRoles = ['Admin'], allowSelf = false) {
   return (req, res, next) => {
     if (!req.user || !req.user.Roles) {
       return res.status(401).json({ message: 'Access denied. User not authenticated.' });
@@ -6,8 +6,13 @@ function allowedRoles(requiredRoles) {
 
     const userRoles = req.user.roles;
 
-    // Check if the user's roles include at least one of the required roles
-    const hasRequiredRole = userRoles.some(role => requiredRoles.includes(role));
+    // Check if the user is trying to access their own resource (allowSelf logic)
+    if (allowSelf && req.params.id && req.user.id === req.params.id) {
+      return next();
+    }
+
+    // Check if the user's roles include at least one of the required roles or "Admin"
+    const hasRequiredRole = userRoles.some(role => requiredRoles.includes(role) || role === 'Admin');
 
     if (!hasRequiredRole) {
       return res.status(403).json({ message: 'Access denied. Insufficient permissions.' });
@@ -17,4 +22,4 @@ function allowedRoles(requiredRoles) {
   };
 }
 
-module.exports = allowedRoles;
+module.exports = roles;
