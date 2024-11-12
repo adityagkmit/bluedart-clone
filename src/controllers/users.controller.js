@@ -20,3 +20,12 @@ exports.getUserById = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+exports.createUser = async (req, res) => {
+  try {
+    const newUser = await userService.createUserByAdmin(req.body);
+    res.status(201).json({ message: 'User created successfully', user: newUser });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
