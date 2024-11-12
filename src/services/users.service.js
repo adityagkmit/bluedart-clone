@@ -108,3 +108,21 @@ exports.createUserByAdmin = async userData => {
 
   return user;
 };
+
+exports.updateUserById = async (userId, updateData) => {
+  if (updateData.password) {
+    updateData.password = await bcrypt.hash(updateData.password, 10);
+  }
+
+  const [rowsUpdated, [updatedUser]] = await User.update(updateData, {
+    where: { id: userId },
+    returning: true, // Return the updated user data
+    individualHooks: true, // Apply hooks if any
+  });
+
+  if (rowsUpdated === 0) {
+    throw new Error('User not found or no changes made');
+  }
+
+  return updatedUser;
+};

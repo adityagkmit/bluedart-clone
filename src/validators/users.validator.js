@@ -35,7 +35,26 @@ const createUserSchema = Joi.object({
   }),
 });
 
+const updateUserSchema = Joi.object({
+  name: Joi.string().min(2).max(50).optional().messages({
+    'string.base': 'Name should be a type of text',
+  }),
+  email: Joi.string().email().optional().messages({
+    'string.email': 'Please enter a valid email',
+  }),
+  phone_number: Joi.string()
+    .pattern(/^[0-9]{10}$/)
+    .optional()
+    .messages({
+      'string.pattern.base': 'Phone number must be a 10-digit number',
+    }),
+  password: Joi.string().min(6).optional().messages({
+    'string.min': 'Password must be at least 6 characters long',
+  }),
+});
+
 module.exports = {
   userIdValidateSchema,
   createUserSchema,
+  updateUserSchema,
 };
