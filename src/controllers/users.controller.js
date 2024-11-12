@@ -48,3 +48,16 @@ exports.updateUser = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    await userService.deleteUserById(userId);
+    res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    // Log the error and return a 400 status for client errors
+    console.error('Error deleting user:', error.message);
+    res.status(400).json({ error: error.message });
+  }
+};

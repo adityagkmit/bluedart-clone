@@ -1,4 +1,4 @@
-const { User, Role } = require('../models');
+const { User, Role, UsersRoles } = require('../models');
 const { redisClient } = require('../config/redis');
 const bcrypt = require('bcryptjs');
 
@@ -125,4 +125,21 @@ exports.updateUserById = async (userId, updateData) => {
   }
 
   return updatedUser;
+};
+
+exports.deleteUserById = async userId => {
+  const user = await User.findByPk(userId);
+  if (!user) return null;
+
+  await user.destroy();
+
+  await UsersRoles.update(
+    { deleted_at: new Date() },
+    {
+      where: { user_id: userId },
+      individualHooks: true, // Ensures hooks are run for updates if needed
+    }
+  );
+
+  return true;
 };

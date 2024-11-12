@@ -17,5 +17,6 @@ router.put(
   validate(userIdValidateSchema, true),
   userController.updateUser
 );
+router.delete('/:id', auth, validate(userIdValidateSchema, true), userController.deleteUser);
 
 module.exports = router;
