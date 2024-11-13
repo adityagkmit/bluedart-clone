@@ -1,6 +1,16 @@
-function validate(schema, params = false) {
+function validate(schema, params = false, query = false) {
   return (req, res, next) => {
-    const { error } = params ? schema.validate(req.params) : schema.validate(req.body);
+    let validationResult;
+
+    if (params) {
+      validationResult = schema.validate(req.params);
+    } else if (query) {
+      validationResult = schema.validate(req.query);
+    } else {
+      validationResult = schema.validate(req.body);
+    }
+
+    const { error } = validationResult;
 
     if (error) {
       return res.status(400).json({

@@ -8,3 +8,13 @@ exports.createShipment = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+exports.getAllShipments = async (req, res) => {
+  const { page = 1, pageSize = 10 } = req.query;
+  try {
+    const result = await shipmentService.getAllShipments(Number(page), Number(pageSize));
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ message: 'An error occurred while fetching shipments', error: error.message });
+  }
+};
