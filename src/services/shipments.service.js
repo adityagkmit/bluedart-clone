@@ -43,3 +43,13 @@ exports.getAllShipments = async (page = 1, pageSize = 10) => {
     shipments: shipments.rows,
   };
 };
+
+exports.getShipmentById = async shipmentId => {
+  return await Shipment.findByPk(shipmentId, {
+    include: [
+      { model: User, as: 'user', attributes: ['id', 'name', 'email'] },
+      { model: Rate, as: 'rate' },
+      { model: Status, as: 'statuses' },
+    ],
+  });
+};

@@ -18,3 +18,15 @@ exports.getAllShipments = async (req, res) => {
     res.status(400).json({ message: 'An error occurred while fetching shipments', error: error.message });
   }
 };
+
+exports.getShipmentById = async (req, res) => {
+  try {
+    const shipment = await shipmentService.getShipmentById(req.params.id);
+    if (!shipment) {
+      return res.status(404).json({ message: 'Shipment not found' });
+    }
+    res.status(200).json(shipment);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};

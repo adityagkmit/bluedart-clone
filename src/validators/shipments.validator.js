@@ -15,6 +15,11 @@ const createShipmentSchema = Joi.object({
   preferred_delivery_time: Joi.string().optional(),
 });
 
+const shipmentIdValidateSchema = Joi.object({
+  id: Joi.string().uuid().required(),
+});
+
 module.exports = {
   createShipmentSchema,
+  shipmentIdValidateSchema,
 };
