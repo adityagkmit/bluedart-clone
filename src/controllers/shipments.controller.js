@@ -30,3 +30,15 @@ exports.getShipmentById = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+exports.updateShipment = async (req, res) => {
+  try {
+    const updatedShipment = await shipmentService.updateShipment(req.params.id, req.body);
+    if (!updatedShipment) {
+      return res.status(404).json({ message: 'Shipment not found' });
+    }
+    res.status(200).json(updatedShipment);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};

@@ -53,3 +53,37 @@ exports.getShipmentById = async shipmentId => {
     ],
   });
 };
+
+exports.updateShipment = async (shipmentId, data) => {
+  const shipment = await Shipment.findByPk(shipmentId);
+  if (!shipment) {
+    return null;
+  }
+
+  if (data.delivery_address || data.weight || data.dimensions || data.is_fragile || data.delivery_option) {
+    const deliveryAddress = data.delivery_address || shipment.delivery_address;
+    const city = await extractCityFromAddress(deliveryAddress);
+    const cityTier = getCityTier(city);
+
+    const rate = await Rate.findOne({ where: { city_tier: cityTier } });
+    if (!rate) {
+      throw new Error(`No rate found for city tier ${cityTier}`);
+    }
+
+    const updatedPrice = calculatePrice(rate, {
+      ...shipment.toJSON(),
+      ...data,
+    });
+
+    data.rate_id = rate.id;
+    data.price = updatedPrice;
+  }
+
+  const [updatedRowCount, updatedShipment] = await Shipment.update(data, {
+    where: { id: shipmentId },
+    returning: true,
+  });
+
+  if (updatedRowCount === 0) return null;
+  return updatedShipment[0];
+};
