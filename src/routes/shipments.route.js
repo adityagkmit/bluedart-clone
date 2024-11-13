@@ -45,4 +45,12 @@ router.put(
   shipmentController.updateShipment
 );
 
+router.delete(
+  '/:id',
+  auth,
+  roles(['Admin', 'Customer'], true),
+  validate(shipmentIdValidateSchema, true),
+  shipmentController.deleteShipment
+);
+
 module.exports = router;

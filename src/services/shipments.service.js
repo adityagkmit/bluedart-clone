@@ -87,3 +87,16 @@ exports.updateShipment = async (shipmentId, data) => {
   if (updatedRowCount === 0) return null;
   return updatedShipment[0];
 };
+
+exports.deleteShipment = async (shipmentId, user) => {
+  const shipment = await Shipment.findByPk(shipmentId);
+  if (!shipment) return null;
+
+  // Check if the user has the right to delete (self or admin)
+  if (shipment.user_id !== user.id && !user.Roles.some(role => role.name === 'Admin')) {
+    throw new Error('Access denied. Insufficient permissions.');
+  }
+
+  await shipment.destroy();
+  return true;
+};
