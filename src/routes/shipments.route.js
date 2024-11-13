@@ -5,6 +5,7 @@ const {
   createShipmentSchema,
   shipmentIdValidateSchema,
   updateShipmentSchema,
+  updateShipmentStatusSchema,
 } = require('../validators/shipments.validator');
 const paginationSchema = require('../validators/pagination.validator');
 const { auth } = require('../middlewares/auth.middleware');
@@ -51,6 +52,15 @@ router.delete(
   roles(['Admin', 'Customer'], true),
   validate(shipmentIdValidateSchema, true),
   shipmentController.deleteShipment
+);
+
+router.patch(
+  '/:id/status',
+  auth,
+  validate(shipmentIdValidateSchema, true),
+  validate(updateShipmentStatusSchema),
+  roles(['Admin', 'Delivery Agent']),
+  shipmentController.updateShipmentStatus
 );
 
 module.exports = router;

@@ -54,3 +54,15 @@ exports.deleteShipment = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+exports.updateShipmentStatus = async (req, res) => {
+  try {
+    const updatedShipment = await shipmentService.updateShipmentStatus(req.params.id, req.body.status);
+    if (!updatedShipment) {
+      return res.status(404).json({ message: 'Shipment not found' });
+    }
+    res.status(200).json(updatedShipment);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};

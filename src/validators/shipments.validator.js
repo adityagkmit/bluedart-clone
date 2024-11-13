@@ -34,8 +34,13 @@ const updateShipmentSchema = Joi.object({
   preferred_delivery_time: Joi.string().optional(),
 });
 
+const updateShipmentStatusSchema = Joi.object({
+  status: Joi.string().valid('Pending', 'In Transit', 'Out for Delivery', 'Delivered').required(),
+});
+
 module.exports = {
   createShipmentSchema,
   shipmentIdValidateSchema,
   updateShipmentSchema,
+  updateShipmentStatusSchema,
 };

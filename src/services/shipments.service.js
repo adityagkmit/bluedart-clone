@@ -100,3 +100,12 @@ exports.deleteShipment = async (shipmentId, user) => {
   await shipment.destroy();
   return true;
 };
+
+exports.updateShipmentStatus = async (shipmentId, status) => {
+  const shipment = await Shipment.findByPk(shipmentId);
+  if (!shipment) return null;
+
+  shipment.status = status;
+  await shipment.save();
+  return shipment;
+};
