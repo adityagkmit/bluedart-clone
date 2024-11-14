@@ -38,9 +38,18 @@ const updateShipmentStatusSchema = Joi.object({
   status: Joi.string().valid('Pending', 'In Transit', 'Out for Delivery', 'Delivered').required(),
 });
 
+const assignAgentSchema = Joi.object({
+  delivery_agent_id: Joi.string().uuid().required().messages({
+    'string.base': 'Delivery agent ID must be a valid UUID',
+    'string.empty': 'Delivery agent ID cannot be empty',
+    'any.required': 'Delivery agent ID is required',
+  }),
+});
+
 module.exports = {
   createShipmentSchema,
   shipmentIdValidateSchema,
   updateShipmentSchema,
   updateShipmentStatusSchema,
+  assignAgentSchema,
 };

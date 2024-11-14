@@ -66,3 +66,21 @@ exports.updateShipmentStatus = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+exports.assignDeliveryAgent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { delivery_agent_id } = req.body;
+
+    const updatedShipment = await shipmentService.assignDeliveryAgent(id, delivery_agent_id);
+
+    if (!updatedShipment) {
+      return res.status(404).json({ message: 'Shipment not found or could not be updated' });
+    }
+
+    res.status(200).json({ message: 'Delivery agent assigned successfully', shipment: updatedShipment });
+  } catch (error) {
+    console.error('Error assigning delivery agent:', error);
+    res.status(400).json({ message: 'An error occurred while assigning the delivery agent' });
+  }
+};

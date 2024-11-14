@@ -6,6 +6,7 @@ const {
   shipmentIdValidateSchema,
   updateShipmentSchema,
   updateShipmentStatusSchema,
+  assignAgentSchema,
 } = require('../validators/shipments.validator');
 const paginationSchema = require('../validators/pagination.validator');
 const { auth } = require('../middlewares/auth.middleware');
@@ -61,6 +62,15 @@ router.patch(
   validate(updateShipmentStatusSchema),
   roles(['Admin', 'Delivery Agent']),
   shipmentController.updateShipmentStatus
+);
+
+router.patch(
+  '/:id/assign-agent',
+  auth,
+  roles(['Admin']),
+  validate(shipmentIdValidateSchema, true),
+  validate(assignAgentSchema),
+  shipmentController.assignDeliveryAgent
 );
 
 module.exports = router;

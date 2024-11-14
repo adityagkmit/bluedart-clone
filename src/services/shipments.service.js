@@ -1,5 +1,5 @@
 const { extractCityFromAddress, getCityTier, calculatePrice } = require('../helpers/shipments.helper');
-const { Shipment, Rate, User, Status } = require('../models');
+const { Shipment, Rate, User, Status, Role } = require('../models');
 
 exports.createShipment = async (shipmentData, userId) => {
   const { delivery_address } = shipmentData;
@@ -108,4 +108,26 @@ exports.updateShipmentStatus = async (shipmentId, status) => {
   shipment.status = status;
   await shipment.save();
   return shipment;
+};
+
+exports.assignDeliveryAgent = async (shipmentId, deliveryAgentId) => {
+  const deliveryAgent = await User.findOne({
+    where: { id: deliveryAgentId },
+    include: {
+      model: Role,
+      where: { name: 'Delivery Agent' },
+      through: { attributes: [] },
+    },
+  });
+
+  if (!deliveryAgent) {
+    throw new Error('Delivery agent not found or does not have the correct role');
+  }
+
+  const [updatedRowCount, updatedShipments] = await Shipment.update(
+    { delivery_agent_id: deliveryAgentId },
+    { where: { id: shipmentId }, returning: true }
+  );
+
+  return updatedRowCount > 0 ? updatedShipments[0] : null;
 };
