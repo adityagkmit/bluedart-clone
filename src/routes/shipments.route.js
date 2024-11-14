@@ -8,7 +8,6 @@ const {
   updateShipmentStatusSchema,
   assignAgentSchema,
 } = require('../validators/shipments.validator');
-const paginationSchema = require('../validators/pagination.validator');
 const { auth } = require('../middlewares/auth.middleware');
 const roles = require('../middlewares/role.middleware');
 
@@ -22,13 +21,7 @@ router.post(
   shipmentController.createShipment
 );
 
-router.get(
-  '/',
-  auth,
-  roles(['Admin']),
-  validate(paginationSchema, false, true),
-  shipmentController.getAllShipments
-);
+router.get('/', auth, roles(['Admin', 'Delivery Agent', 'Customer']), shipmentController.getShipments);
 
 router.get(
   '/:id',

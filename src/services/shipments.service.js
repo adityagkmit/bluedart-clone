@@ -1,5 +1,6 @@
 const { extractCityFromAddress, getCityTier, calculatePrice } = require('../helpers/shipments.helper');
 const { Shipment, Rate, User, Status, Role } = require('../models');
+const { Op } = require('sequelize');
 
 exports.createShipment = async (shipmentData, userId) => {
   const { delivery_address } = shipmentData;
@@ -21,26 +22,34 @@ exports.createShipment = async (shipmentData, userId) => {
   return shipment;
 };
 
-exports.getAllShipments = async (page = 1, pageSize = 10) => {
-  const offset = (page - 1) * pageSize;
-  const limit = pageSize;
+exports.getShipments = async (filters, page = 1, limit = 10) => {
+  const whereConditions = {};
 
-  const shipments = await Shipment.findAndCountAll({
+  // Construct the filter conditions dynamically
+  for (const [key, value] of Object.entries(filters)) {
+    if (Object.keys(Shipment.rawAttributes).includes(key)) {
+      whereConditions[key] = { [Op.eq]: value }; // Use appropriate Sequelize operator
+    }
+  }
+
+  const offset = (page - 1) * limit;
+
+  const { count, rows } = await Shipment.findAndCountAll({
+    where: whereConditions,
     include: [
       { model: User, as: 'user', attributes: ['id', 'name', 'email'] },
       { model: Rate, as: 'rate' },
       { model: Status, as: 'statuses' },
     ],
-    limit,
     offset,
+    limit: parseInt(limit),
   });
 
   return {
-    totalShipments: shipments.count,
-    totalPages: Math.ceil(shipments.count / pageSize),
-    currentPage: page,
-    pageSize,
-    shipments: shipments.rows,
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: parseInt(page),
+    shipments: rows,
   };
 };
 

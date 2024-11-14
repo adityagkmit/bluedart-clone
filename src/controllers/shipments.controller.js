@@ -9,13 +9,14 @@ exports.createShipment = async (req, res) => {
   }
 };
 
-exports.getAllShipments = async (req, res) => {
-  const { page = 1, pageSize = 10 } = req.query;
+exports.getShipments = async (req, res) => {
   try {
-    const result = await shipmentService.getAllShipments(Number(page), Number(pageSize));
-    res.status(200).json(result);
+    const { page, limit, ...filters } = req.query;
+    const shipments = await shipmentService.getShipments(filters, page, limit);
+    res.status(200).json(shipments);
   } catch (error) {
-    res.status(400).json({ message: 'An error occurred while fetching shipments', error: error.message });
+    console.error('Error fetching shipments:', error);
+    res.status(400).json({ message: 'An error occurred while fetching shipments.' });
   }
 };
 
