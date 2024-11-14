@@ -1,11 +1,12 @@
 const userService = require('../services/users.service');
+const { ApiResponse, ApiError } = require('../helpers/response.helper');
 
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await userService.getAllUsers();
-    res.status(200).json(users);
+    ApiResponse.send(res, 200, 'Users retrieved successfully', users);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    ApiError.handleError(new ApiError(400, error.message), res);
   }
 };
 
@@ -13,20 +14,20 @@ exports.getUserById = async (req, res) => {
   try {
     const user = await userService.getUserById(req.params.id);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return ApiError.handleError(new ApiError(404, 'User not found'), res);
     }
-    res.status(200).json(user);
+    ApiResponse.send(res, 200, 'User retrieved successfully', user);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    ApiError.handleError(new ApiError(400, error.message), res);
   }
 };
 
 exports.createUser = async (req, res) => {
   try {
     const newUser = await userService.createUserByAdmin(req.body);
-    res.status(201).json({ message: 'User created successfully', user: newUser });
+    ApiResponse.send(res, 201, 'User created successfully', newUser);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    ApiError.handleError(new ApiError(400, error.message), res);
   }
 };
 
@@ -36,28 +37,23 @@ exports.updateUser = async (req, res) => {
     const updatedUser = await userService.updateUserById(userId, req.body);
 
     if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found or no changes made' });
+      return ApiError.handleError(new ApiError(404, 'User not found or no changes made'), res);
     }
 
-    res.status(200).json({
-      message: 'User updated successfully',
-      user: updatedUser,
-    });
+    ApiResponse.send(res, 200, 'User updated successfully', updatedUser);
   } catch (error) {
     console.error('Error updating user:', error.message);
-    res.status(400).json({ error: error.message });
+    ApiError.handleError(new ApiError(400, error.message), res);
   }
 };
 
 exports.deleteUser = async (req, res) => {
   try {
     const userId = req.params.id;
-
     await userService.deleteUserById(userId);
-    res.status(200).json({ message: 'User deleted successfully' });
+    ApiResponse.send(res, 200, 'User deleted successfully');
   } catch (error) {
-    // Log the error and return a 400 status for client errors
     console.error('Error deleting user:', error.message);
-    res.status(400).json({ error: error.message });
+    ApiError.handleError(new ApiError(400, error.message), res);
   }
 };

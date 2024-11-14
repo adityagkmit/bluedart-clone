@@ -66,7 +66,7 @@ exports.getShipmentById = async shipmentId => {
 exports.updateShipment = async (shipmentId, data) => {
   const shipment = await Shipment.findByPk(shipmentId);
   if (!shipment) {
-    return null;
+    throw new Error(`No shipment found with id: ${shipmentId}`);
   }
 
   if (data.delivery_address || data.weight || data.dimensions || data.is_fragile || data.delivery_option) {
@@ -112,7 +112,9 @@ exports.deleteShipment = async (shipmentId, user) => {
 
 exports.updateShipmentStatus = async (shipmentId, status) => {
   const shipment = await Shipment.findByPk(shipmentId);
-  if (!shipment) return null;
+  if (!shipment) {
+    throw new Error(`No shipment found with id: ${shipmentId}`);
+  }
 
   shipment.status = status;
   await shipment.save();

@@ -1,3 +1,5 @@
+const { ApiError } = require('../helpers/response.helper');
+
 function validate(schema, params = false, query = false) {
   return (req, res, next) => {
     let validationResult;
@@ -13,12 +15,12 @@ function validate(schema, params = false, query = false) {
     const { error } = validationResult;
 
     if (error) {
-      return res.status(400).json({
-        errors: error.details.map(detail => ({
-          message: detail.message,
-          path: detail.path,
-        })),
-      });
+      const errorDetails = error.details.map(detail => ({
+        message: detail.message,
+        path: detail.path,
+      }));
+
+      return ApiError.handleError(new ApiError(400, 'Validation failed', errorDetails), res);
     }
 
     next();
