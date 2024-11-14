@@ -1,0 +1,32 @@
+const cityTiers = {
+  Mumbai: 'Tier1',
+  Delhi: 'Tier1',
+  Bangalore: 'Tier1',
+  Hyderabad: 'Tier1',
+  Chennai: 'Tier1',
+  Kolkata: 'Tier1',
+  Pune: 'Tier1',
+  Ahmedabad: 'Tier2',
+  Surat: 'Tier2',
+  Jaipur: 'Tier2',
+  Udaipur: 'Tier2',
+  Lucknow: 'Tier2',
+  Nagpur: 'Tier2',
+  Indore: 'Tier2',
+  Bhopal: 'Tier3',
+  Patna: 'Tier3',
+  Kanpur: 'Tier3',
+  Varanasi: 'Tier3',
+  Agra: 'Tier3',
+  Coimbatore: 'Tier3',
+  Mysore: 'Tier3',
+  Guwahati: 'Tier4',
+  Ranchi: 'Tier4',
+  Jammu: 'Tier4',
+  Dehradun: 'Tier4',
+  Shimla: 'Tier4',
+};
+
+module.exports = {
+  cityTiers,
+};
