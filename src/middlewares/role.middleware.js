@@ -1,7 +1,9 @@
+const { ApiResponse } = require('../helpers/response.helper');
+
 function roles(requiredRoles = ['Admin'], allowSelf = false) {
   return (req, res, next) => {
-    if (!req.user || !req.user.Roles) {
-      return res.status(401).json({ message: 'Access denied. User not authenticated.' });
+    if (!req.user || !req.user.roles) {
+      return ApiResponse.send(res, 401, 'Access denied. User not authenticated.');
     }
 
     const userRoles = req.user.roles;
@@ -15,7 +17,7 @@ function roles(requiredRoles = ['Admin'], allowSelf = false) {
     const hasRequiredRole = userRoles.some(role => requiredRoles.includes(role) || role === 'Admin');
 
     if (!hasRequiredRole) {
-      return res.status(403).json({ message: 'Access denied. Insufficient permissions.' });
+      return ApiResponse.send(res, 403, 'Access denied. Insufficient permissions.');
     }
 
     next();

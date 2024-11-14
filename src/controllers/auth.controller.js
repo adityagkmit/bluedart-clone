@@ -1,3 +1,4 @@
+const { ApiResponse, ApiError } = require('../helpers/response.helper');
 const authService = require('../services/auth.service');
 
 exports.sendOtp = async (req, res) => {
@@ -5,9 +6,9 @@ exports.sendOtp = async (req, res) => {
 
   try {
     const result = await authService.sendOtp(email);
-    res.status(200).json(result);
+    ApiResponse.send(res, 200, 'OTP sent successfully', result);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    ApiError.handleError(new ApiError(400, error.message), res);
   }
 };
 
@@ -16,20 +17,20 @@ exports.verifyOtp = async (req, res) => {
     const { email, otp } = req.body;
     const isValid = await authService.verifyOtp(email, otp);
     if (!isValid) {
-      return res.status(400).json({ error: 'Invalid or expired OTP' });
+      return ApiError.handleError(new ApiError(400, 'Invalid or expired OTP'), res);
     }
-    res.status(200).json({ message: 'OTP verified' });
+    ApiResponse.send(res, 200, 'OTP verified successfully');
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    ApiError.handleError(new ApiError(400, error.message), res);
   }
 };
 
 exports.register = async (req, res) => {
   try {
     const user = await authService.registerUser(req.body);
-    res.status(201).json({ user });
+    ApiResponse.send(res, 201, 'User registered successfully', user);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    ApiError.handleError(new ApiError(400, error.message), res);
   }
 };
 
@@ -37,37 +38,36 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const result = await authService.loginUser(email, password);
-    res.status(200).json(result);
+    ApiResponse.send(res, 200, 'Login successful', result);
   } catch (error) {
-    res.status(401).json({ message: 'Invalid credentials', error });
+    ApiError.handleError(new ApiError(401, 'Invalid credentials', [error.message]), res);
   }
 };
 
 exports.logout = async (req, res) => {
   const token = req.headers['authorization']?.replace('Bearer ', '');
   if (!token) {
-    return res.status(400).json({ error: 'Token not provided' });
+    return ApiError.handleError(new ApiError(400, 'Token not provided'), res);
   }
 
   try {
     await authService.logout(token);
-    res.status(200).json({ message: 'Logged out successfully' });
+    ApiResponse.send(res, 200, 'Logged out successfully');
   } catch (error) {
-    res.status(400).json({ message: 'Failed to logout', error });
+    ApiError.handleError(new ApiError(400, 'Failed to logout', [error.message]), res);
   }
 };
 
 exports.verifyDocument = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: 'No document uploaded.' });
+      return ApiError.handleError(new ApiError(400, 'No document uploaded.'), res);
     }
 
     const result = await authService.uploadDocument(req.file, req.user.id);
-
-    res.status(200).json(result);
+    ApiResponse.send(res, 200, 'Document uploaded successfully', result);
   } catch (error) {
     console.error('Error during document upload:', error);
-    res.status(400).json({ message: error.message });
+    ApiError.handleError(new ApiError(400, error.message), res);
   }
 };

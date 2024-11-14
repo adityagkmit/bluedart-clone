@@ -1,11 +1,12 @@
 const { verifyToken } = require('../helpers/jwt.helper');
 const { User, Role } = require('../models');
+const { ApiResponse, ApiError } = require('../helpers/response.helper');
 
 const auth = async (req, res, next) => {
   const token = req.headers['authorization']?.replace('Bearer ', '');
 
   if (!token) {
-    return res.status(401).json({ message: 'Access denied. No token provided.' });
+    return ApiResponse.send(res, 401, 'Access denied. No token provided.');
   }
 
   try {
@@ -18,7 +19,7 @@ const auth = async (req, res, next) => {
     });
 
     if (!user) {
-      return res.status(401).json({ message: 'Invalid token. User not found.' });
+      return ApiResponse.send(res, 401, 'Invalid token. User not found.');
     }
 
     req.user = user;
@@ -27,15 +28,16 @@ const auth = async (req, res, next) => {
     next();
   } catch (error) {
     if (error.message === 'Token is blacklisted') {
-      return res.status(401).json({ message: 'Token has been revoked.' });
+      return ApiResponse.send(res, 401, 'Token has been revoked.');
     }
 
     if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: 'Token expired.' });
+      return ApiResponse.send(res, 401, 'Token expired.');
     } else if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ message: 'Invalid token.' });
+      return ApiResponse.send(res, 401, 'Invalid token.');
     }
-    res.status(400).json({ message: 'An error occurred during authentication.' });
+
+    ApiError.handleError(new ApiError(400, 'An error occurred during authentication', [error.message]), res);
   }
 };
 
