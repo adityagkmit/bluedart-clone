@@ -22,4 +22,12 @@ router.get(
   statusController.getStatusById
 );
 
+router.delete(
+  '/:id',
+  auth,
+  roles(['Admin', 'Delivery Agent']),
+  validate(statusIdValidateSchema, true),
+  statusController.deleteStatus
+);
+
 module.exports = router;

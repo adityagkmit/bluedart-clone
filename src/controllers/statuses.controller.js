@@ -21,3 +21,12 @@ exports.getStatusById = async (req, res) => {
     ApiError.handleError(error, res);
   }
 };
+
+exports.deleteStatus = async (req, res) => {
+  try {
+    await statusService.deleteStatus(req.params.id, req.user);
+    ApiResponse.send(res, 200, 'Status deleted successfully');
+  } catch (error) {
+    ApiError.handleError(error, res);
+  }
+};
