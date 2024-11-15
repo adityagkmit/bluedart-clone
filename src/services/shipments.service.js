@@ -63,6 +63,19 @@ exports.getShipmentById = async shipmentId => {
   });
 };
 
+exports.getShipmentStatuses = async shipmentId => {
+  const statuses = await Status.findAll({
+    where: { shipment_id: shipmentId },
+    order: [['created_at', 'ASC']],
+  });
+
+  if (!statuses.length) {
+    throw new Error('No statuses found for this shipment');
+  }
+
+  return statuses;
+};
+
 exports.updateShipment = async (shipmentId, data) => {
   const shipment = await Shipment.findByPk(shipmentId);
   if (!shipment) {
