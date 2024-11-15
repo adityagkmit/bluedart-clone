@@ -35,6 +35,16 @@ exports.getShipmentById = async (req, res) => {
   }
 };
 
+exports.getShipmentStatuses = async (req, res) => {
+  try {
+    const shipmentId = req.params.id;
+    const statuses = await shipmentService.getShipmentStatuses(shipmentId);
+    ApiResponse.send(res, 200, 'Shipment statuses retrieved successfully', statuses);
+  } catch (error) {
+    ApiError.handleError(error, res);
+  }
+};
+
 exports.updateShipment = async (req, res) => {
   try {
     const updatedShipment = await shipmentService.updateShipment(req.params.id, req.body);

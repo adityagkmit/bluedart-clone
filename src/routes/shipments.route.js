@@ -31,6 +31,14 @@ router.get(
   shipmentController.getShipmentById
 );
 
+router.get(
+  '/:id/statuses',
+  auth,
+  roles(['Admin', 'Delivery Agent', 'Customer']),
+  shipmentController.getShipmentStatuses,
+  validate(shipmentIdValidateSchema, true)
+);
+
 router.put(
   '/:id',
   auth,
