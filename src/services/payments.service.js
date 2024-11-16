@@ -134,3 +134,20 @@ exports.getPaymentById = async (id, user) => {
 
   return payment;
 };
+
+exports.getAllPayments = async (page = 1, limit = 10) => {
+  const offset = (page - 1) * limit;
+  const payments = await Payment.findAndCountAll({
+    include: [{ model: Shipment, as: 'Shipment' }],
+    limit,
+    offset,
+    order: [['created_at', 'DESC']],
+  });
+
+  return {
+    total: payments.count,
+    pages: Math.ceil(payments.count / limit),
+    currentPage: page,
+    data: payments.rows,
+  };
+};

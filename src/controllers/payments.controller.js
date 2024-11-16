@@ -29,3 +29,13 @@ exports.getPaymentById = async (req, res) => {
     ApiError.handleError(error, res);
   }
 };
+
+exports.getAllPayments = async (req, res) => {
+  try {
+    const { page, limit } = req.query;
+    const payments = await paymentService.getAllPayments(page, limit);
+    ApiResponse.send(res, 200, 'Payments retrieved successfully', payments);
+  } catch (error) {
+    ApiError.handleError(error, res);
+  }
+};
