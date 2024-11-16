@@ -1,23 +1,32 @@
 const { Status, Shipment } = require('../models');
+const { sendShipmentStatusUpdateEmail } = require('../helpers/email.helper');
 const ApiError = require('../helpers/response.helper').ApiError;
 const { Op } = require('sequelize');
 
-exports.createStatus = async (data, user) => {
-  // Check if the user is the delivery agent for the shipment
-  const shipment = await Shipment.findByPk(data.shipment_id);
+exports.createStatus = async (data, user, transaction = null) => {
+  const shipment = await Shipment.findByPk(data.shipment_id, { transaction });
   if (!shipment) {
     throw new ApiError(404, 'Shipment not found');
   }
 
-  if (shipment.delivery_agent_id !== user.id && !user.Roles.some(role => role.name === 'Admin')) {
+  if (
+    shipment.delivery_agent_id !== user.id &&
+    shipment.user_id !== user.id &&
+    !user.Roles.some(role => role.name === 'Admin')
+  ) {
     throw new ApiError(403, 'Access denied. You are not authorized to update the status for this shipment.');
   }
 
-  // Create the status
-  const status = await Status.create(data);
+  const status = await Status.create(data, { transaction });
+  await shipment.update({ status: data.name }, { transaction });
 
-  // Update the status field in the Shipment table
-  await shipment.update({ status: data.name });
+  const emailData = {
+    userName: user.name,
+    shipmentId: shipment.id,
+    status: data.name,
+  };
+
+  await sendShipmentStatusUpdateEmail(user.email, emailData);
 
   return status;
 };

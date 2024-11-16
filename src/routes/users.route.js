@@ -5,6 +5,7 @@ const { auth } = require('../middlewares/auth.middleware');
 const roles = require('../middlewares/role.middleware');
 const validate = require('../middlewares/validator.middleware');
 const { userIdValidateSchema, createUserSchema, updateUserSchema } = require('../validators/users.validator');
+const paginationSchema = require('../validators/pagination.validator');
 
 // Routes for user operations
 router.get('/', auth, roles(), userController.getAllUsers);
@@ -26,6 +27,15 @@ router.delete(
   roles(['Admin'], true),
   validate(userIdValidateSchema, true),
   userController.deleteUser
+);
+
+router.get(
+  '/:id/payments',
+  auth,
+  roles(['Admin'], true),
+  validate(userIdValidateSchema, true),
+  validate(paginationSchema, false, true),
+  userController.getUserPayments
 );
 
 module.exports = router;

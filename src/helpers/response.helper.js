@@ -18,7 +18,7 @@ class ApiError extends Error {
     this.success = false;
     this.data = null;
     this.message = message;
-    this.errors = errors;
+    this.errors = Array.isArray(errors) ? errors : [errors]; // Ensure `errors` is always an array.
 
     if (stack) {
       this.stack = stack;
@@ -29,7 +29,16 @@ class ApiError extends Error {
 
   static handleError(err, res) {
     const { statusCode = 500, message, errors } = err;
-    res.status(statusCode).json(new ApiError(statusCode, message, errors));
+
+    // If `errors` is empty but a stack trace exists, include it for debugging (optional).
+    const responseErrors = errors.length > 0 ? errors : [{ message: message || 'An error occurred' }];
+
+    res.status(statusCode).json({
+      statusCode,
+      success: false,
+      data: null,
+      errors: responseErrors,
+    });
   }
 }
 

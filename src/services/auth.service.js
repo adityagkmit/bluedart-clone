@@ -1,5 +1,5 @@
 const { redisClient } = require('../config/redis');
-const { sendOtpEmail } = require('../utils/email');
+const { sendOtpEmail } = require('../helpers/email.helper');
 const { User } = require('../models');
 const { uploadFileToS3 } = require('../helpers/aws.helper');
 const userService = require('./users.service');

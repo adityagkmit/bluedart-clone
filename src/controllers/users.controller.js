@@ -57,3 +57,15 @@ exports.deleteUser = async (req, res) => {
     ApiError.handleError(new ApiError(400, error.message), res);
   }
 };
+
+exports.getUserPayments = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { page, limit } = req.query;
+    const payments = await userService.getPaymentsByUserId(id, page, limit);
+    ApiResponse.send(res, 200, 'User payments retrieved successfully', payments);
+  } catch (error) {
+    ApiError.handleError(error, res);
+  }
+};
