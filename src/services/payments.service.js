@@ -2,6 +2,7 @@ const { Payment, Shipment, sequelize } = require('../models');
 const statusService = require('./statuses.service');
 const ApiError = require('../helpers/response.helper').ApiError;
 const { sendPaymentConfirmationEmail } = require('../helpers/email.helper');
+const { Op } = require('sequelize');
 
 exports.createPayment = async (paymentData, user) => {
   const transaction = await sequelize.transaction();
@@ -135,19 +136,30 @@ exports.getPaymentById = async (id, user) => {
   return payment;
 };
 
-exports.getAllPayments = async (page = 1, limit = 10) => {
+exports.getPayments = async (filters, page = 1, limit = 10) => {
+  const whereConditions = {};
+
+  // Dynamically construct filter conditions
+  for (const [key, value] of Object.entries(filters)) {
+    if (Object.keys(Payment.rawAttributes).includes(key)) {
+      whereConditions[key] = { [Op.eq]: value };
+    }
+  }
+
   const offset = (page - 1) * limit;
-  const payments = await Payment.findAndCountAll({
-    include: [{ model: Shipment, as: 'Shipment' }],
-    limit,
+
+  const { count, rows } = await Payment.findAndCountAll({
+    where: whereConditions,
+    include: [{ model: Shipment, as: 'Shipment', attributes: ['id', 'status'] }],
     offset,
+    limit: parseInt(limit),
     order: [['created_at', 'DESC']],
   });
 
   return {
-    total: payments.count,
-    pages: Math.ceil(payments.count / limit),
-    currentPage: page,
-    data: payments.rows,
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: parseInt(page),
+    payments: rows,
   };
 };

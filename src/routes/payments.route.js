@@ -4,7 +4,6 @@ const { auth } = require('../middlewares/auth.middleware');
 const roles = require('../middlewares/role.middleware');
 const validate = require('../middlewares/validator.middleware');
 const { createPaymentSchema, paymentIdValidateSchema } = require('../validators/payments.validator');
-const paginationSchema = require('../validators/pagination.validator');
 
 const router = express.Router();
 
@@ -26,12 +25,6 @@ router.get(
   paymentController.getPaymentById
 );
 
-router.get(
-  '/',
-  auth,
-  roles(['Admin']),
-  validate(paginationSchema, false, true),
-  paymentController.getAllPayments
-);
+router.get('/', auth, roles(['Admin', 'User']), paymentController.getPayments);
 
 module.exports = router;

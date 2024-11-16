@@ -30,12 +30,19 @@ exports.getPaymentById = async (req, res) => {
   }
 };
 
-exports.getAllPayments = async (req, res) => {
+exports.getPayments = async (req, res) => {
   try {
-    const { page, limit } = req.query;
-    const payments = await paymentService.getAllPayments(page, limit);
-    ApiResponse.send(res, 200, 'Payments retrieved successfully', payments);
+    const { page, limit, ...filters } = req.query;
+
+    // If the user is not an Admin, restrict results to their own payments
+    if (!req.user.Roles.some(role => role.name === 'Admin')) {
+      filters.user_id = req.user.id;
+    }
+
+    const payments = await paymentService.getPayments(filters, page, limit);
+    return ApiResponse.send(res, 200, 'Payments retrieved successfully', payments);
   } catch (error) {
-    ApiError.handleError(error, res);
+    console.error('Error fetching payments:', error);
+    return ApiError.handleError(new ApiError(400, 'An error occurred while fetching payments.'), res);
   }
 };
