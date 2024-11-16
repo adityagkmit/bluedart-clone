@@ -1,6 +1,7 @@
 const { Payment, Shipment, sequelize } = require('../models');
 const statusService = require('./statuses.service');
 const ApiError = require('../helpers/response.helper').ApiError;
+const { sendPaymentConfirmationEmail } = require('../helpers/email.helper');
 
 exports.createPayment = async (paymentData, user) => {
   const transaction = await sequelize.transaction();
@@ -52,6 +53,14 @@ exports.createPayment = async (paymentData, user) => {
         user,
         transaction
       );
+
+      await sendPaymentConfirmationEmail(user.email, {
+        userName: user.name,
+        shipmentId: shipment.id,
+        amount: shipment.price,
+        method: payment.method,
+        status: payment.status,
+      });
     } else {
       payment.status = 'Failed';
       await payment.save({ transaction });

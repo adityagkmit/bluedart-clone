@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shipment Status Update</title>
+  </head>
+
+  <body
+    style="
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      background-color: #f9f9f9;
+      color: #333;
+      padding: 20px;
+    "
+  >
+    <div
+      style="
+        max-width: 600px;
+        margin: 0 auto;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+      "
+    >
+      <h2 style="color: #333">Shipment Status Update</h2>
+      <p>Dear <%= userName %>,</p>
+      <p>
+        We would like to inform you that your shipment with ID <strong><%= shipmentId %></strong> is now
+        <strong><%= shipmentStatus %></strong>.
+      </p>
+      <p>Thank you for choosing our service. We will keep you informed about further updates.</p>
+      <p>Best regards,</p>
+      <p>The BluDart Team</p>
+    </div>
+  </body>
+</html>

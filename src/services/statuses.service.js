@@ -1,4 +1,5 @@
 const { Status, Shipment } = require('../models');
+const { sendShipmentStatusUpdateEmail } = require('../helpers/email.helper');
 const ApiError = require('../helpers/response.helper').ApiError;
 const { Op } = require('sequelize');
 
@@ -18,6 +19,14 @@ exports.createStatus = async (data, user, transaction = null) => {
 
   const status = await Status.create(data, { transaction });
   await shipment.update({ status: data.name }, { transaction });
+
+  const emailData = {
+    userName: user.name,
+    shipmentId: shipment.id,
+    status: data.name,
+  };
+
+  await sendShipmentStatusUpdateEmail(user.email, emailData);
 
   return status;
 };
