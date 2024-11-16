@@ -1,4 +1,4 @@
-const { User, Role, UsersRoles } = require('../models');
+const { User, Role, UsersRoles, Payment, Shipment } = require('../models');
 const { redisClient } = require('../config/redis');
 const bcrypt = require('bcryptjs');
 
@@ -142,4 +142,23 @@ exports.deleteUserById = async userId => {
   );
 
   return true;
+};
+
+exports.getPaymentsByUserId = async (userId, page = 1, limit = 10) => {
+  const offset = (page - 1) * limit;
+
+  const payments = await Payment.findAndCountAll({
+    where: { user_id: userId },
+    include: [{ model: Shipment, as: 'Shipment', attributes: ['id', 'status'] }],
+    limit,
+    offset,
+    order: [['created_at', 'DESC']],
+  });
+
+  return {
+    total: payments.count,
+    pages: Math.ceil(payments.count / limit),
+    currentPage: page,
+    data: payments.rows,
+  };
 };
