@@ -118,3 +118,19 @@ exports.completeCODPayment = async (paymentId, user) => {
     throw error;
   }
 };
+
+exports.getPaymentById = async (id, user) => {
+  const payment = await Payment.findByPk(id, {
+    include: [{ model: Shipment, as: 'Shipment' }],
+  });
+
+  if (!payment) {
+    throw new ApiError(404, 'Payment not found');
+  }
+
+  if (payment.user_id !== user.id && !user.Roles.some(role => role.name === 'Admin')) {
+    throw new ApiError(403, 'Access denied');
+  }
+
+  return payment;
+};

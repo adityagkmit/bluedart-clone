@@ -17,4 +17,12 @@ router.patch(
   paymentController.completeCODPayment
 );
 
+router.get(
+  '/:id',
+  auth,
+  roles(['Admin', 'Delivery Agent', 'User']),
+  validate(paymentIdValidateSchema, true),
+  paymentController.getPaymentById
+);
+
 module.exports = router;

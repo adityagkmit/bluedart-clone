@@ -11,11 +11,21 @@ exports.createPayment = async (req, res) => {
   }
 };
 
-exports.completeCODPayment = async (req, res, next) => {
+exports.completeCODPayment = async (req, res) => {
   try {
     const payment = await paymentService.completeCODPayment(req.params.id, req.user);
     ApiResponse.send(res, 200, 'Payment status updated successfully', payment);
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    ApiError.handleError(error, res);
+  }
+};
+
+exports.getPaymentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const payment = await paymentService.getPaymentById(id, req.user);
+    ApiResponse.send(res, 200, 'Payment details retrieved successfully', payment);
+  } catch (error) {
+    ApiError.handleError(error, res);
   }
 };
