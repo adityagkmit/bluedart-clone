@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const db = require('./src/models');
 const { connectToRedis } = require('./src/config/redis.js');
 const { registerRoutes } = require('./src/routes/index.js');
+const { initializeSchedulers } = require('./src/schedulers');
 
 dotenv.config();
 
@@ -17,6 +18,9 @@ app.use(express.json());
 registerRoutes(app);
 
 connectToRedis();
+
+// Initialize Schedulers
+initializeSchedulers();
 
 // Connect to the database
 

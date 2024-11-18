@@ -1,6 +1,7 @@
 const { extractCityFromAddress, getCityTier, calculatePrice } = require('../helpers/shipments.helper');
 const { Shipment, Rate, User, Status, Role } = require('../models');
 const { Op } = require('sequelize');
+const { sendEmail } = require('../helpers/email.helper');
 
 exports.createShipment = async (shipmentData, userId) => {
   const { delivery_address } = shipmentData;
@@ -154,4 +155,62 @@ exports.assignDeliveryAgent = async (shipmentId, deliveryAgentId) => {
   );
 
   return updatedRowCount > 0 ? updatedShipments[0] : null;
+};
+
+exports.sendShipmentReminders = async () => {
+  try {
+    const shipments = await Shipment.findAll({
+      where: {
+        status: 'Pending', // Only pending shipments
+        preferred_delivery_date: { [Op.gte]: new Date() }, // Only future deliveries
+      },
+      include: [{ model: User, as: 'user', attributes: ['name', 'email'] }],
+    });
+
+    if (shipments.length === 0) {
+      console.log('No pending shipments require reminders.');
+      return;
+    }
+
+    console.log(`Found ${shipments.length} shipments requiring reminders.`);
+
+    // Process each shipment
+    const promises = shipments.map(async shipment => {
+      const { user, id, preferred_delivery_date } = shipment;
+
+      console.log(user);
+      console.log(user.email);
+
+      const emailData = {
+        to: user.email,
+        subject: 'Shipment Reminder',
+        template: 'shipment-reminder',
+        data: {
+          user: {
+            name: user.name,
+          },
+          shipment: {
+            id,
+            deliveryDate: preferred_delivery_date.toDateString(),
+          },
+        },
+      };
+
+      // Send email and update the shipment
+      try {
+        await sendEmail(emailData);
+        console.log(`Reminder sent to ${user.email} for shipment ID: ${id}`);
+
+        await shipment.save();
+      } catch (err) {
+        console.error(`Failed to send reminder for shipment ID: ${id}`, err);
+      }
+    });
+
+    await Promise.all(promises);
+
+    console.log('All shipment reminders processed.');
+  } catch (error) {
+    console.error('Error while sending shipment reminders:', error);
+  }
 };
