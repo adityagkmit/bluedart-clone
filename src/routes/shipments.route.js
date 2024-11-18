@@ -7,6 +7,7 @@ const {
   updateShipmentSchema,
   updateShipmentStatusSchema,
   assignAgentSchema,
+  shipmentRescheduleSchema,
 } = require('../validators/shipments.validator');
 const { auth } = require('../middlewares/auth.middleware');
 const roles = require('../middlewares/role.middleware');
@@ -72,6 +73,14 @@ router.patch(
   validate(shipmentIdValidateSchema, true),
   validate(assignAgentSchema),
   shipmentController.assignDeliveryAgent
+);
+
+router.patch(
+  '/:id/reschedule',
+  auth,
+  roles(['Customer', 'Admin']),
+  validate(shipmentRescheduleSchema),
+  shipmentController.rescheduleShipment
 );
 
 module.exports = router;

@@ -101,3 +101,28 @@ exports.assignDeliveryAgent = async (req, res) => {
     );
   }
 };
+
+exports.rescheduleShipment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { preferred_delivery_date, preferred_delivery_time } = req.body;
+    const userId = req.user.id;
+    const userRoles = req.user.Roles.map(role => role.name);
+
+    const updatedShipment = await shipmentService.rescheduleShipment(id, {
+      preferred_delivery_date,
+      preferred_delivery_time,
+      userId,
+      userRoles,
+    });
+
+    if (!updatedShipment) {
+      return ApiError.handleError(new ApiError(404, 'Shipment not found or cannot be rescheduled'), res);
+    }
+
+    return ApiResponse.send(res, 200, 'Delivery rescheduled successfully', updatedShipment);
+  } catch (error) {
+    console.error('Error rescheduling shipment:', error);
+    return ApiError.handleError(new ApiError(400, error.message), res);
+  }
+};
