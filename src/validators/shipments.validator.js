@@ -46,10 +46,25 @@ const assignAgentSchema = Joi.object({
   }),
 });
 
+const shipmentRescheduleSchema = Joi.object({
+  preferred_delivery_date: Joi.date().required().messages({
+    'date.base': 'Preferred delivery date must be a valid date.',
+    'any.required': 'Preferred delivery date is required.',
+  }),
+  preferred_delivery_time: Joi.string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/)
+    .required()
+    .messages({
+      'string.pattern.base': 'Preferred delivery time must be in HH:MM:SS format.',
+      'any.required': 'Preferred delivery time is required.',
+    }),
+});
+
 module.exports = {
   createShipmentSchema,
   shipmentIdValidateSchema,
   updateShipmentSchema,
   updateShipmentStatusSchema,
   assignAgentSchema,
+  shipmentRescheduleSchema,
 };

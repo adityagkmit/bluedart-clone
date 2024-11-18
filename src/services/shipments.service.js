@@ -214,3 +214,22 @@ exports.sendShipmentReminders = async () => {
     console.error('Error while sending shipment reminders:', error);
   }
 };
+
+exports.rescheduleShipment = async (shipmentId, data) => {
+  const shipment = await Shipment.findByPk(shipmentId);
+
+  if (!shipment) {
+    return null;
+  }
+
+  // Ensure the user is the owner of the shipment or has the 'Admin' role
+  if (shipment.user_id !== data.userId && !data.userRoles.includes('Admin')) {
+    throw new Error('Access denied. User is not the owner of the shipment.');
+  }
+
+  shipment.preferred_delivery_date = data.preferred_delivery_date;
+  shipment.preferred_delivery_time = data.preferred_delivery_time;
+
+  await shipment.save();
+  return shipment;
+};
