@@ -1,5 +1,6 @@
 const { User, Role, UsersRoles, Payment, Shipment } = require('../models');
 const { redisClient } = require('../config/redis');
+const { uploadFileToS3 } = require('../helpers/aws.helper');
 const bcrypt = require('bcryptjs');
 
 exports.createUser = async ({ name, email, password, phone_number }) => {
@@ -161,4 +162,40 @@ exports.getPaymentsByUserId = async (userId, page = 1, limit = 10) => {
     currentPage: page,
     data: payments.rows,
   };
+};
+
+exports.uploadDocument = async (file, userId) => {
+  try {
+    const documentUrl = await uploadFileToS3(file, userId);
+
+    // Update the user document URL in the database
+    const [updatedRowCount] = await User.update({ document_url: documentUrl }, { where: { id: userId } });
+
+    if (updatedRowCount === 0) {
+      throw new Error('User not found or document URL could not be updated.');
+    }
+
+    return {
+      message: 'Document uploaded successfully.',
+      documentUrl,
+    };
+  } catch (error) {
+    console.error('Error uploading document to S3:', error);
+    throw new Error('Failed to upload document.');
+  }
+};
+
+exports.verifyUserDocument = async userId => {
+  const user = await User.findByPk(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  if (!user.document_url) {
+    throw new Error('User document not found');
+  }
+
+  user.is_document_verified = true;
+  await user.save();
+  return user;
 };

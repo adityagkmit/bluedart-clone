@@ -1,7 +1,6 @@
 const { redisClient } = require('../config/redis');
 const { sendOtpEmail } = require('../helpers/email.helper');
 const { User } = require('../models');
-const { uploadFileToS3 } = require('../helpers/aws.helper');
 const userService = require('./users.service');
 const bcrypt = require('bcryptjs');
 const { generateToken, blacklistToken } = require('../helpers/jwt.helper');
@@ -52,32 +51,10 @@ async function logout(token) {
   await blacklistToken(token);
 }
 
-async function uploadDocument(file, userId) {
-  try {
-    const documentUrl = await uploadFileToS3(file, userId);
-
-    // Update the user document URL in the database
-    const [updatedRowCount] = await User.update({ document_url: documentUrl }, { where: { id: userId } });
-
-    if (updatedRowCount === 0) {
-      throw new Error('User not found or document URL could not be updated.');
-    }
-
-    return {
-      message: 'Document uploaded successfully.',
-      documentUrl,
-    };
-  } catch (error) {
-    console.error('Error uploading document to S3:', error);
-    throw new Error('Failed to upload document.');
-  }
-}
-
 module.exports = {
   sendOtp,
   verifyOtp,
   registerUser,
   loginUser,
   logout,
-  uploadDocument,
 };

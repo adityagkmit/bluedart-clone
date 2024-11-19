@@ -57,17 +57,3 @@ exports.logout = async (req, res) => {
     ApiError.handleError(new ApiError(400, 'Failed to logout', [error.message]), res);
   }
 };
-
-exports.verifyDocument = async (req, res) => {
-  try {
-    if (!req.file) {
-      return ApiError.handleError(new ApiError(400, 'No document uploaded.'), res);
-    }
-
-    const result = await authService.uploadDocument(req.file, req.user.id);
-    ApiResponse.send(res, 200, 'Document uploaded successfully', result);
-  } catch (error) {
-    console.error('Error during document upload:', error);
-    ApiError.handleError(new ApiError(400, error.message), res);
-  }
-};

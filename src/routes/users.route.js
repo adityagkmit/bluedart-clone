@@ -6,6 +6,7 @@ const roles = require('../middlewares/role.middleware');
 const validate = require('../middlewares/validator.middleware');
 const { userIdValidateSchema, createUserSchema, updateUserSchema } = require('../validators/users.validator');
 const paginationSchema = require('../validators/pagination.validator');
+const upload = require('../middlewares/multer.middleware');
 
 // Routes for user operations
 router.get('/', auth, roles(), userController.getAllUsers);
@@ -36,6 +37,22 @@ router.get(
   validate(userIdValidateSchema, true),
   validate(paginationSchema, false, true),
   userController.getUserPayments
+);
+
+router.post(
+  '/upload-document',
+  auth,
+  roles(['Customer, Delivery Agent']),
+  upload.single('document'),
+  userController.uploadDocument
+);
+
+router.patch(
+  '/:id/verify-document',
+  auth,
+  roles(['Admin']),
+  validate(userIdValidateSchema, true),
+  userController.verifyDocument
 );
 
 module.exports = router;
