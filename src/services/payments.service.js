@@ -4,7 +4,7 @@ const ApiError = require('../helpers/response.helper').ApiError;
 const { sendPaymentConfirmationEmail } = require('../helpers/email.helper');
 const { Op } = require('sequelize');
 
-exports.createPayment = async (paymentData, user) => {
+const createPayment = async (paymentData, user) => {
   const transaction = await sequelize.transaction();
 
   try {
@@ -82,7 +82,7 @@ const processTransaction = async payment => {
   return true;
 };
 
-exports.completeCODPayment = async (paymentId, user) => {
+const completeCODPayment = async (paymentId, user) => {
   const transaction = await sequelize.transaction();
   try {
     const payment = await Payment.findByPk(paymentId, { transaction });
@@ -120,7 +120,7 @@ exports.completeCODPayment = async (paymentId, user) => {
   }
 };
 
-exports.getPaymentById = async (id, user) => {
+const getPaymentById = async (id, user) => {
   const payment = await Payment.findByPk(id, {
     include: [{ model: Shipment, as: 'Shipment' }],
   });
@@ -136,7 +136,7 @@ exports.getPaymentById = async (id, user) => {
   return payment;
 };
 
-exports.getPayments = async (filters, page = 1, limit = 10) => {
+const getPayments = async (filters, page = 1, limit = 10) => {
   const whereConditions = {};
 
   // Dynamically construct filter conditions
@@ -162,4 +162,11 @@ exports.getPayments = async (filters, page = 1, limit = 10) => {
     currentPage: parseInt(page),
     payments: rows,
   };
+};
+
+module.exports = {
+  createPayment,
+  completeCODPayment,
+  getPaymentById,
+  getPayments,
 };

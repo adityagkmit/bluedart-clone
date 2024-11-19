@@ -4,7 +4,7 @@ const { Op } = require('sequelize');
 const { sendEmail } = require('../helpers/email.helper');
 const { ApiError } = require('../helpers/response.helper');
 
-exports.createShipment = async (shipmentData, userId) => {
+const createShipment = async (shipmentData, userId) => {
   const { delivery_address } = shipmentData;
   const city = await extractCityFromAddress(delivery_address);
   const cityTier = getCityTier(city);
@@ -24,7 +24,7 @@ exports.createShipment = async (shipmentData, userId) => {
   return shipment;
 };
 
-exports.getShipments = async (filters, page = 1, limit = 10) => {
+const getShipments = async (filters, page = 1, limit = 10) => {
   const whereConditions = {};
 
   for (const [key, value] of Object.entries(filters)) {
@@ -54,7 +54,7 @@ exports.getShipments = async (filters, page = 1, limit = 10) => {
   };
 };
 
-exports.getShipmentById = async shipmentId => {
+const getShipmentById = async shipmentId => {
   const shipment = await Shipment.findByPk(shipmentId, {
     include: [
       { model: User, as: 'user', attributes: ['id', 'name', 'email'] },
@@ -70,7 +70,7 @@ exports.getShipmentById = async shipmentId => {
   return shipment;
 };
 
-exports.getShipmentStatuses = async shipmentId => {
+const getShipmentStatuses = async shipmentId => {
   const statuses = await Status.findAll({
     where: { shipment_id: shipmentId },
     order: [['created_at', 'ASC']],
@@ -83,7 +83,7 @@ exports.getShipmentStatuses = async shipmentId => {
   return statuses;
 };
 
-exports.updateShipment = async (shipmentId, data) => {
+const updateShipment = async (shipmentId, data) => {
   const shipment = await Shipment.findByPk(shipmentId);
   if (!shipment) {
     throw new ApiError(404, `No shipment found with ID ${shipmentId}`);
@@ -120,7 +120,7 @@ exports.updateShipment = async (shipmentId, data) => {
   return updatedShipment[0];
 };
 
-exports.deleteShipment = async (shipmentId, user) => {
+const deleteShipment = async (shipmentId, user) => {
   const shipment = await Shipment.findByPk(shipmentId);
   if (!shipment) {
     throw new ApiError(404, `No shipment found with ID ${shipmentId}`);
@@ -134,7 +134,7 @@ exports.deleteShipment = async (shipmentId, user) => {
   return true;
 };
 
-exports.updateShipmentStatus = async (shipmentId, status) => {
+const updateShipmentStatus = async (shipmentId, status) => {
   const shipment = await Shipment.findByPk(shipmentId);
   if (!shipment) {
     throw new ApiError(404, `No shipment found with ID ${shipmentId}`);
@@ -145,7 +145,7 @@ exports.updateShipmentStatus = async (shipmentId, status) => {
   return shipment;
 };
 
-exports.assignDeliveryAgent = async (shipmentId, deliveryAgentId) => {
+const assignDeliveryAgent = async (shipmentId, deliveryAgentId) => {
   const deliveryAgent = await User.findOne({
     where: { id: deliveryAgentId },
     include: {
@@ -171,7 +171,7 @@ exports.assignDeliveryAgent = async (shipmentId, deliveryAgentId) => {
   return updatedShipments[0];
 };
 
-exports.sendShipmentReminders = async () => {
+const sendShipmentReminders = async () => {
   const shipments = await Shipment.findAll({
     where: {
       status: 'Pending',
@@ -211,7 +211,7 @@ exports.sendShipmentReminders = async () => {
   console.log('All shipment reminders processed.');
 };
 
-exports.rescheduleShipment = async (shipmentId, data) => {
+const rescheduleShipment = async (shipmentId, data) => {
   const shipment = await Shipment.findByPk(shipmentId);
 
   if (!shipment) {
@@ -227,4 +227,17 @@ exports.rescheduleShipment = async (shipmentId, data) => {
 
   await shipment.save();
   return shipment;
+};
+
+module.exports = {
+  createShipment,
+  getShipments,
+  getShipmentById,
+  getShipmentStatuses,
+  updateShipment,
+  deleteShipment,
+  updateShipmentStatus,
+  assignDeliveryAgent,
+  sendShipmentReminders,
+  rescheduleShipment,
 };

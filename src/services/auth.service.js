@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const { generateToken, blacklistToken } = require('../helpers/jwt.helper');
 const { ApiError } = require('../helpers/response.helper');
 
-exports.sendOtp = async email => {
+const sendOtp = async email => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   await redisClient.setEx(email, 300, otp); // Store OTP in Redis for 1 minute
   console.log(otp);
@@ -15,7 +15,7 @@ exports.sendOtp = async email => {
   return { message: 'OTP sent to email' };
 };
 
-exports.verifyOtp = async (email, otp) => {
+const verifyOtp = async ({ email, otp }) => {
   const storedOtp = await redisClient.get(email);
 
   if (!storedOtp || storedOtp !== otp) {
@@ -27,7 +27,7 @@ exports.verifyOtp = async (email, otp) => {
   return true;
 };
 
-exports.registerUser = async payload => {
+const registerUser = async payload => {
   const isVerified = await redisClient.get(`${payload.email}_verified`);
 
   if (isVerified !== 'true') {
@@ -37,7 +37,7 @@ exports.registerUser = async payload => {
   return userService.createUser(payload);
 };
 
-exports.loginUser = async (email, password) => {
+const loginUser = async ({ email, password }) => {
   const user = await User.findOne({ where: { email } });
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -48,6 +48,14 @@ exports.loginUser = async (email, password) => {
   return { user, token };
 };
 
-exports.logout = async token => {
+const logout = async token => {
   await blacklistToken(token);
+};
+
+module.exports = {
+  sendOtp,
+  verifyOtp,
+  registerUser,
+  loginUser,
+  logout,
 };

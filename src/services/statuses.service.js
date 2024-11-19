@@ -3,7 +3,7 @@ const { sendShipmentStatusUpdateEmail } = require('../helpers/email.helper');
 const ApiError = require('../helpers/response.helper').ApiError;
 const { Op } = require('sequelize');
 
-exports.createStatus = async (data, user, transaction = null) => {
+const createStatus = async (data, user, transaction = null) => {
   const shipment = await Shipment.findByPk(data.shipment_id, { transaction });
   if (!shipment) {
     throw new ApiError(404, 'Shipment not found');
@@ -31,11 +31,11 @@ exports.createStatus = async (data, user, transaction = null) => {
   return status;
 };
 
-exports.getStatusById = async id => {
+const getStatusById = async id => {
   return await Status.findByPk(id);
 };
 
-exports.deleteStatus = async (id, user) => {
+const deleteStatus = async (id, user) => {
   const status = await Status.findByPk(id, { include: { model: Shipment } });
   if (!status) {
     throw new ApiError(404, 'Status not found');
@@ -62,4 +62,10 @@ exports.deleteStatus = async (id, user) => {
 
   await status.destroy();
   return true;
+};
+
+module.exports = {
+  createStatus,
+  getStatusById,
+  deleteStatus,
 };
