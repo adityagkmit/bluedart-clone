@@ -42,6 +42,10 @@ module.exports = sequelize => {
       document_url: {
         type: DataTypes.STRING,
       },
+      is_document_verified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
     },
     {
       sequelize,

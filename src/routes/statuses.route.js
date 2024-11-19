@@ -5,10 +5,12 @@ const validate = require('../middlewares/validator.middleware');
 const { createStatusSchema, statusIdValidateSchema } = require('../validators/statuses.validator');
 const { auth } = require('../middlewares/auth.middleware');
 const roles = require('../middlewares/role.middleware');
+const checkDocumentVerified = require('../middlewares/document.middleware');
 
 router.post(
   '/',
   auth,
+  checkDocumentVerified,
   roles(['Admin', 'Delivery Agent']),
   validate(createStatusSchema),
   statusController.createStatus
@@ -17,6 +19,7 @@ router.post(
 router.get(
   '/:id',
   auth,
+  checkDocumentVerified,
   roles(['Admin', 'Delivery Agent', 'Customer']),
   validate(statusIdValidateSchema, true),
   statusController.getStatusById
@@ -25,6 +28,7 @@ router.get(
 router.delete(
   '/:id',
   auth,
+  checkDocumentVerified,
   roles(['Admin', 'Delivery Agent']),
   validate(statusIdValidateSchema, true),
   statusController.deleteStatus

@@ -69,3 +69,28 @@ exports.getUserPayments = async (req, res) => {
     ApiError.handleError(error, res);
   }
 };
+
+exports.uploadDocument = async (req, res) => {
+  try {
+    if (!req.file) {
+      return ApiError.handleError(new ApiError(400, 'No document uploaded.'), res);
+    }
+
+    const result = await userService.uploadDocument(req.file, req.user.id);
+    ApiResponse.send(res, 200, 'Document uploaded successfully', result);
+  } catch (error) {
+    console.error('Error during document upload:', error);
+    ApiError.handleError(new ApiError(400, error.message), res);
+  }
+};
+
+exports.verifyDocument = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await userService.verifyUserDocument(id);
+    return ApiResponse.send(res, 200, 'Document verified successfully', user);
+  } catch (error) {
+    ApiError.handleError(error, res);
+  }
+};
