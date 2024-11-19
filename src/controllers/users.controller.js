@@ -1,7 +1,7 @@
 const userService = require('../services/users.service');
 const { ApiResponse, ApiError } = require('../helpers/response.helper');
 
-exports.getAllUsers = async (req, res) => {
+const getAllUsers = async (req, res) => {
   try {
     const users = await userService.getAllUsers();
     ApiResponse.send(res, 200, 'Users retrieved successfully', users);
@@ -10,7 +10,7 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-exports.getUserById = async (req, res) => {
+const getUserById = async (req, res) => {
   try {
     const user = await userService.getUserById(req.params.id);
     if (!user) {
@@ -22,7 +22,7 @@ exports.getUserById = async (req, res) => {
   }
 };
 
-exports.createUser = async (req, res) => {
+const createUser = async (req, res) => {
   try {
     const newUser = await userService.createUserByAdmin(req.body);
     ApiResponse.send(res, 201, 'User created successfully', newUser);
@@ -31,7 +31,7 @@ exports.createUser = async (req, res) => {
   }
 };
 
-exports.updateUser = async (req, res) => {
+const updateUser = async (req, res) => {
   try {
     const userId = req.params.id;
     const updatedUser = await userService.updateUserById(userId, req.body);
@@ -47,7 +47,7 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-exports.deleteUser = async (req, res) => {
+const deleteUser = async (req, res) => {
   try {
     const userId = req.params.id;
     await userService.deleteUserById(userId);
@@ -58,7 +58,7 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
-exports.getUserPayments = async (req, res) => {
+const getUserPayments = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -70,7 +70,7 @@ exports.getUserPayments = async (req, res) => {
   }
 };
 
-exports.uploadDocument = async (req, res) => {
+const uploadDocument = async (req, res) => {
   try {
     if (!req.file) {
       return ApiError.handleError(new ApiError(400, 'No document uploaded.'), res);
@@ -84,7 +84,7 @@ exports.uploadDocument = async (req, res) => {
   }
 };
 
-exports.verifyDocument = async (req, res) => {
+const verifyDocument = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -93,4 +93,15 @@ exports.verifyDocument = async (req, res) => {
   } catch (error) {
     ApiError.handleError(error, res);
   }
+};
+
+module.exports = {
+  getAllUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser,
+  getUserPayments,
+  uploadDocument,
+  verifyDocument,
 };

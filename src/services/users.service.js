@@ -4,7 +4,7 @@ const { uploadFileToS3 } = require('../helpers/aws.helper');
 const bcrypt = require('bcryptjs');
 const { ApiError } = require('../helpers/response.helper');
 
-exports.createUser = async ({ name, email, password, phone_number }) => {
+const createUser = async ({ name, email, password, phone_number }) => {
   const userExists = await User.findOne({ where: { email } });
   if (userExists) {
     throw new ApiError(400, 'User already exists');
@@ -32,7 +32,7 @@ exports.createUser = async ({ name, email, password, phone_number }) => {
   return user;
 };
 
-exports.getAllUsers = async () => {
+const getAllUsers = async () => {
   const users = await User.findAll({
     include: {
       model: Role,
@@ -52,7 +52,7 @@ exports.getAllUsers = async () => {
   }));
 };
 
-exports.getUserById = async userId => {
+const getUserById = async userId => {
   const user = await User.findByPk(userId, {
     attributes: { exclude: ['password'] },
     include: {
@@ -77,7 +77,7 @@ exports.getUserById = async userId => {
   };
 };
 
-exports.createUserByAdmin = async userData => {
+const createUserByAdmin = async userData => {
   const { name, email, password, phone_number, roles } = userData;
 
   const userExists = await User.findOne({ where: { email } });
@@ -111,7 +111,7 @@ exports.createUserByAdmin = async userData => {
   return user;
 };
 
-exports.updateUserById = async (userId, updateData) => {
+const updateUserById = async (userId, updateData) => {
   if (updateData.password) {
     updateData.password = await bcrypt.hash(updateData.password, 10);
   }
@@ -129,7 +129,7 @@ exports.updateUserById = async (userId, updateData) => {
   return updatedUser;
 };
 
-exports.deleteUserById = async userId => {
+const deleteUserById = async userId => {
   const user = await User.findByPk(userId);
   if (!user) {
     throw new ApiError(404, 'User not found');
@@ -148,7 +148,7 @@ exports.deleteUserById = async userId => {
   return true;
 };
 
-exports.getPaymentsByUserId = async (userId, page = 1, limit = 10) => {
+const getPaymentsByUserId = async (userId, page = 1, limit = 10) => {
   const offset = (page - 1) * limit;
 
   const payments = await Payment.findAndCountAll({
@@ -167,7 +167,7 @@ exports.getPaymentsByUserId = async (userId, page = 1, limit = 10) => {
   };
 };
 
-exports.uploadDocument = async (file, userId) => {
+const uploadDocument = async (file, userId) => {
   const documentUrl = await uploadFileToS3(file, userId);
 
   const [updatedRowCount] = await User.update({ document_url: documentUrl }, { where: { id: userId } });
@@ -182,7 +182,7 @@ exports.uploadDocument = async (file, userId) => {
   };
 };
 
-exports.verifyUserDocument = async userId => {
+const verifyUserDocument = async userId => {
   const user = await User.findByPk(userId);
   if (!user) {
     throw new ApiError(404, 'User not found');
@@ -195,4 +195,16 @@ exports.verifyUserDocument = async userId => {
   user.is_document_verified = true;
   await user.save();
   return user;
+};
+
+module.exports = {
+  createUser,
+  getAllUsers,
+  getUserById,
+  createUserByAdmin,
+  updateUserById,
+  deleteUserById,
+  getPaymentsByUserId,
+  uploadDocument,
+  verifyUserDocument,
 };
