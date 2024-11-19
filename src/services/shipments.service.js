@@ -2,6 +2,7 @@ const { extractCityFromAddress, getCityTier, calculatePrice } = require('../help
 const { Shipment, Rate, User, Status, Role } = require('../models');
 const { Op } = require('sequelize');
 const { sendEmail } = require('../helpers/email.helper');
+const { ApiError } = require('../helpers/response.helper');
 
 exports.createShipment = async (shipmentData, userId) => {
   const { delivery_address } = shipmentData;
@@ -10,7 +11,7 @@ exports.createShipment = async (shipmentData, userId) => {
 
   const rate = await Rate.findOne({ where: { city_tier: cityTier } });
   if (!rate) {
-    throw new Error(`No rate found for city tier ${cityTier}`);
+    throw new ApiError(404, `No rate found for city tier ${cityTier}`);
   }
 
   const shipment = await Shipment.create({
@@ -26,10 +27,9 @@ exports.createShipment = async (shipmentData, userId) => {
 exports.getShipments = async (filters, page = 1, limit = 10) => {
   const whereConditions = {};
 
-  // Construct the filter conditions dynamically
   for (const [key, value] of Object.entries(filters)) {
     if (Object.keys(Shipment.rawAttributes).includes(key)) {
-      whereConditions[key] = { [Op.eq]: value }; // Use appropriate Sequelize operator
+      whereConditions[key] = { [Op.eq]: value };
     }
   }
 
@@ -55,13 +55,19 @@ exports.getShipments = async (filters, page = 1, limit = 10) => {
 };
 
 exports.getShipmentById = async shipmentId => {
-  return await Shipment.findByPk(shipmentId, {
+  const shipment = await Shipment.findByPk(shipmentId, {
     include: [
       { model: User, as: 'user', attributes: ['id', 'name', 'email'] },
       { model: Rate, as: 'rate' },
       { model: Status, as: 'statuses' },
     ],
   });
+
+  if (!shipment) {
+    throw new ApiError(404, `No shipment found with ID ${shipmentId}`);
+  }
+
+  return shipment;
 };
 
 exports.getShipmentStatuses = async shipmentId => {
@@ -71,7 +77,7 @@ exports.getShipmentStatuses = async shipmentId => {
   });
 
   if (!statuses.length) {
-    throw new Error('No statuses found for this shipment');
+    throw new ApiError(404, 'No statuses found for this shipment');
   }
 
   return statuses;
@@ -80,7 +86,7 @@ exports.getShipmentStatuses = async shipmentId => {
 exports.updateShipment = async (shipmentId, data) => {
   const shipment = await Shipment.findByPk(shipmentId);
   if (!shipment) {
-    throw new Error(`No shipment found with id: ${shipmentId}`);
+    throw new ApiError(404, `No shipment found with ID ${shipmentId}`);
   }
 
   if (data.delivery_address || data.weight || data.dimensions || data.is_fragile || data.delivery_option) {
@@ -90,7 +96,7 @@ exports.updateShipment = async (shipmentId, data) => {
 
     const rate = await Rate.findOne({ where: { city_tier: cityTier } });
     if (!rate) {
-      throw new Error(`No rate found for city tier ${cityTier}`);
+      throw new ApiError(404, `No rate found for city tier ${cityTier}`);
     }
 
     const updatedPrice = calculatePrice(rate, {
@@ -107,17 +113,21 @@ exports.updateShipment = async (shipmentId, data) => {
     returning: true,
   });
 
-  if (updatedRowCount === 0) return null;
+  if (updatedRowCount === 0) {
+    throw new ApiError(400, 'No changes made to the shipment');
+  }
+
   return updatedShipment[0];
 };
 
 exports.deleteShipment = async (shipmentId, user) => {
   const shipment = await Shipment.findByPk(shipmentId);
-  if (!shipment) return null;
+  if (!shipment) {
+    throw new ApiError(404, `No shipment found with ID ${shipmentId}`);
+  }
 
-  // Check if the user has the right to delete (self or admin)
   if (shipment.user_id !== user.id && !user.Roles.some(role => role.name === 'Admin')) {
-    throw new Error('Access denied. Insufficient permissions.');
+    throw new ApiError(403, 'Access denied. Insufficient permissions.');
   }
 
   await shipment.destroy();
@@ -127,7 +137,7 @@ exports.deleteShipment = async (shipmentId, user) => {
 exports.updateShipmentStatus = async (shipmentId, status) => {
   const shipment = await Shipment.findByPk(shipmentId);
   if (!shipment) {
-    throw new Error(`No shipment found with id: ${shipmentId}`);
+    throw new ApiError(404, `No shipment found with ID ${shipmentId}`);
   }
 
   shipment.status = status;
@@ -146,7 +156,7 @@ exports.assignDeliveryAgent = async (shipmentId, deliveryAgentId) => {
   });
 
   if (!deliveryAgent) {
-    throw new Error('Delivery agent not found or does not have the correct role');
+    throw new ApiError(404, 'Delivery agent not found or does not have the correct role');
   }
 
   const [updatedRowCount, updatedShipments] = await Shipment.update(
@@ -154,77 +164,62 @@ exports.assignDeliveryAgent = async (shipmentId, deliveryAgentId) => {
     { where: { id: shipmentId }, returning: true }
   );
 
-  return updatedRowCount > 0 ? updatedShipments[0] : null;
+  if (updatedRowCount === 0) {
+    throw new ApiError(400, `No shipment updated with ID ${shipmentId}`);
+  }
+
+  return updatedShipments[0];
 };
 
 exports.sendShipmentReminders = async () => {
-  try {
-    const shipments = await Shipment.findAll({
-      where: {
-        status: 'Pending', // Only pending shipments
-        preferred_delivery_date: { [Op.gte]: new Date() }, // Only future deliveries
-      },
-      include: [{ model: User, as: 'user', attributes: ['name', 'email'] }],
-    });
+  const shipments = await Shipment.findAll({
+    where: {
+      status: 'Pending',
+      preferred_delivery_date: { [Op.gte]: new Date() },
+    },
+    include: [{ model: User, as: 'user', attributes: ['name', 'email'] }],
+  });
 
-    if (shipments.length === 0) {
-      console.log('No pending shipments require reminders.');
-      return;
-    }
-
-    console.log(`Found ${shipments.length} shipments requiring reminders.`);
-
-    // Process each shipment
-    const promises = shipments.map(async shipment => {
-      const { user, id, preferred_delivery_date } = shipment;
-
-      console.log(user);
-      console.log(user.email);
-
-      const emailData = {
-        to: user.email,
-        subject: 'Shipment Reminder',
-        template: 'shipment-reminder',
-        data: {
-          user: {
-            name: user.name,
-          },
-          shipment: {
-            id,
-            deliveryDate: preferred_delivery_date.toDateString(),
-          },
-        },
-      };
-
-      // Send email and update the shipment
-      try {
-        await sendEmail(emailData);
-        console.log(`Reminder sent to ${user.email} for shipment ID: ${id}`);
-
-        await shipment.save();
-      } catch (err) {
-        console.error(`Failed to send reminder for shipment ID: ${id}`, err);
-      }
-    });
-
-    await Promise.all(promises);
-
-    console.log('All shipment reminders processed.');
-  } catch (error) {
-    console.error('Error while sending shipment reminders:', error);
+  if (shipments.length === 0) {
+    console.log('No pending shipments require reminders.');
+    return;
   }
+
+  const promises = shipments.map(async shipment => {
+    const { user, id, preferred_delivery_date } = shipment;
+
+    const emailData = {
+      to: user.email,
+      subject: 'Shipment Reminder',
+      template: 'shipment-reminder',
+      data: {
+        user: { name: user.name },
+        shipment: { id, deliveryDate: preferred_delivery_date.toDateString() },
+      },
+    };
+
+    try {
+      await sendEmail(emailData);
+      console.log(`Reminder sent to ${user.email} for shipment ID: ${id}`);
+      await shipment.save();
+    } catch (err) {
+      console.error(`Failed to send reminder for shipment ID: ${id}`, err);
+    }
+  });
+
+  await Promise.all(promises);
+  console.log('All shipment reminders processed.');
 };
 
 exports.rescheduleShipment = async (shipmentId, data) => {
   const shipment = await Shipment.findByPk(shipmentId);
 
   if (!shipment) {
-    return null;
+    throw new ApiError(404, `No shipment found with ID ${shipmentId}`);
   }
 
-  // Ensure the user is the owner of the shipment or has the 'Admin' role
   if (shipment.user_id !== data.userId && !data.userRoles.includes('Admin')) {
-    throw new Error('Access denied. User is not the owner of the shipment.');
+    throw new ApiError(403, 'Access denied. User is not the owner of the shipment.');
   }
 
   shipment.preferred_delivery_date = data.preferred_delivery_date;
