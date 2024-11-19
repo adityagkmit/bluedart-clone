@@ -1,7 +1,7 @@
 const { ApiError, ApiResponse } = require('../helpers/response.helper');
 const shipmentService = require('../services/shipments.service');
 
-exports.createShipment = async (req, res) => {
+const createShipment = async (req, res) => {
   try {
     const shipment = await shipmentService.createShipment(req.body, req.user.id);
     return ApiResponse.send(res, 201, 'Shipment created successfully', shipment);
@@ -11,7 +11,7 @@ exports.createShipment = async (req, res) => {
   }
 };
 
-exports.getShipments = async (req, res) => {
+const getShipments = async (req, res) => {
   try {
     const { page, limit, ...filters } = req.query;
     const shipments = await shipmentService.getShipments(filters, page, limit);
@@ -22,7 +22,7 @@ exports.getShipments = async (req, res) => {
   }
 };
 
-exports.getShipmentById = async (req, res) => {
+const getShipmentById = async (req, res) => {
   try {
     const shipment = await shipmentService.getShipmentById(req.params.id);
     if (!shipment) {
@@ -35,7 +35,7 @@ exports.getShipmentById = async (req, res) => {
   }
 };
 
-exports.getShipmentStatuses = async (req, res) => {
+const getShipmentStatuses = async (req, res) => {
   try {
     const shipmentId = req.params.id;
     const statuses = await shipmentService.getShipmentStatuses(shipmentId);
@@ -45,7 +45,7 @@ exports.getShipmentStatuses = async (req, res) => {
   }
 };
 
-exports.updateShipment = async (req, res) => {
+const updateShipment = async (req, res) => {
   try {
     const updatedShipment = await shipmentService.updateShipment(req.params.id, req.body);
     if (!updatedShipment) {
@@ -58,7 +58,7 @@ exports.updateShipment = async (req, res) => {
   }
 };
 
-exports.deleteShipment = async (req, res) => {
+const deleteShipment = async (req, res) => {
   try {
     const result = await shipmentService.deleteShipment(req.params.id, req.user);
     if (!result) {
@@ -71,7 +71,7 @@ exports.deleteShipment = async (req, res) => {
   }
 };
 
-exports.updateShipmentStatus = async (req, res) => {
+const updateShipmentStatus = async (req, res) => {
   try {
     const updatedShipment = await shipmentService.updateShipmentStatus(req.params.id, req.body.status);
     if (!updatedShipment) {
@@ -84,7 +84,7 @@ exports.updateShipmentStatus = async (req, res) => {
   }
 };
 
-exports.assignDeliveryAgent = async (req, res) => {
+const assignDeliveryAgent = async (req, res) => {
   try {
     const { id } = req.params;
     const { delivery_agent_id } = req.body;
@@ -102,7 +102,7 @@ exports.assignDeliveryAgent = async (req, res) => {
   }
 };
 
-exports.rescheduleShipment = async (req, res) => {
+const rescheduleShipment = async (req, res) => {
   try {
     const { id } = req.params;
     const { preferred_delivery_date, preferred_delivery_time } = req.body;
@@ -125,4 +125,16 @@ exports.rescheduleShipment = async (req, res) => {
     console.error('Error rescheduling shipment:', error);
     return ApiError.handleError(new ApiError(400, error.message), res);
   }
+};
+
+module.exports = {
+  createShipment,
+  getShipments,
+  getShipmentById,
+  getShipmentStatuses,
+  updateShipment,
+  deleteShipment,
+  updateShipmentStatus,
+  assignDeliveryAgent,
+  rescheduleShipment,
 };
