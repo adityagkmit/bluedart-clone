@@ -4,7 +4,7 @@ const { createShipmentPdf, createCustomerPdf } = require('../helpers/pdf.helper'
 const { ApiError } = require('../helpers/response.helper');
 const { Op } = require('sequelize');
 
-exports.generateShipmentReport = async (filters, userId, roles) => {
+const generateShipmentReport = async (filters, userId, roles) => {
   const whereConditions = {};
 
   // Dynamic Filters
@@ -87,7 +87,7 @@ exports.generateShipmentReport = async (filters, userId, roles) => {
   return { url, metadata };
 };
 
-exports.generateCustomerReport = async (filters, userId) => {
+const generateCustomerReport = async (filters, userId) => {
   const whereConditions = {
     user_id: userId,
   };
@@ -157,4 +157,9 @@ exports.generateCustomerReport = async (filters, userId) => {
   });
 
   return { url, metadata: pdfData.metadata };
+};
+
+module.exports = {
+  generateShipmentReport,
+  generateCustomerReport,
 };
