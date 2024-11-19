@@ -2,16 +2,16 @@ const { User, Role, UsersRoles, Payment, Shipment } = require('../models');
 const { redisClient } = require('../config/redis');
 const { uploadFileToS3 } = require('../helpers/aws.helper');
 const bcrypt = require('bcryptjs');
+const { ApiError } = require('../helpers/response.helper');
 
 exports.createUser = async ({ name, email, password, phone_number }) => {
   const userExists = await User.findOne({ where: { email } });
   if (userExists) {
-    throw new Error('User already exists');
+    throw new ApiError(400, 'User already exists');
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Create and save the new user
   const user = await User.create({
     name,
     email,
@@ -21,13 +21,12 @@ exports.createUser = async ({ name, email, password, phone_number }) => {
 
   const customerRole = await Role.findOne({ where: { name: 'Customer' } });
   if (!customerRole) {
-    throw new Error('Customer role not found. Ensure roles are seeded in the database.');
+    throw new ApiError(404, 'Customer role not found. Ensure roles are seeded in the database.');
   }
 
   // Associate the user with the 'Customer' role
   await user.addRole(customerRole);
 
-  // remove the verification flag after successful registration
   await redisClient.del(`${email}_verified`);
 
   return user;
@@ -37,7 +36,7 @@ exports.getAllUsers = async () => {
   const users = await User.findAll({
     include: {
       model: Role,
-      through: { attributes: [] }, // Exclude details from the join table
+      through: { attributes: [] },
     },
   });
 
@@ -49,7 +48,7 @@ exports.getAllUsers = async () => {
     document_url: user.document_url,
     created_at: user.created_at,
     updated_at: user.updated_at,
-    roles: user.Roles.map(role => role.name), // Extract role names into an array
+    roles: user.Roles.map(role => role.name),
   }));
 };
 
@@ -62,7 +61,9 @@ exports.getUserById = async userId => {
     },
   });
 
-  if (!user) return null;
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
 
   return {
     id: user.id,
@@ -72,23 +73,20 @@ exports.getUserById = async userId => {
     document_url: user.document_url,
     created_at: user.created_at,
     updated_at: user.updated_at,
-    roles: user.Roles.map(role => role.name), // Extract role names into an array
+    roles: user.Roles.map(role => role.name),
   };
 };
 
 exports.createUserByAdmin = async userData => {
   const { name, email, password, phone_number, roles } = userData;
 
-  // Check if the user already exists
   const userExists = await User.findOne({ where: { email } });
   if (userExists) {
-    throw new Error('User already exists');
+    throw new ApiError(400, 'User already exists');
   }
 
-  // Hash the password
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Create the user
   const user = await User.create({
     name,
     email,
@@ -96,14 +94,17 @@ exports.createUserByAdmin = async userData => {
     phone_number,
   });
 
-  // Assign roles if provided, otherwise assign the default 'Customer' role
   if (roles && roles.length > 0) {
     const roleRecords = await Role.findAll({ where: { name: roles } });
-    if (roleRecords.length > 0) {
-      await user.addRoles(roleRecords);
+    if (!roleRecords.length) {
+      throw new ApiError(400, 'One or more specified roles do not exist');
     }
+    await user.addRoles(roleRecords);
   } else {
     const defaultRole = await Role.findOne({ where: { name: 'Customer' } });
+    if (!defaultRole) {
+      throw new ApiError(404, 'Default customer role not found');
+    }
     await user.addRole(defaultRole);
   }
 
@@ -117,12 +118,12 @@ exports.updateUserById = async (userId, updateData) => {
 
   const [rowsUpdated, [updatedUser]] = await User.update(updateData, {
     where: { id: userId },
-    returning: true, // Return the updated user data
-    individualHooks: true, // Apply hooks if any
+    returning: true,
+    individualHooks: true,
   });
 
   if (rowsUpdated === 0) {
-    throw new Error('User not found or no changes made');
+    throw new ApiError(404, 'User not found or no changes made');
   }
 
   return updatedUser;
@@ -130,7 +131,9 @@ exports.updateUserById = async (userId, updateData) => {
 
 exports.deleteUserById = async userId => {
   const user = await User.findByPk(userId);
-  if (!user) return null;
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
 
   await user.destroy();
 
@@ -138,7 +141,7 @@ exports.deleteUserById = async userId => {
     { deleted_at: new Date() },
     {
       where: { user_id: userId },
-      individualHooks: true, // Ensures hooks are run for updates if needed
+      individualHooks: true,
     }
   );
 
@@ -165,34 +168,28 @@ exports.getPaymentsByUserId = async (userId, page = 1, limit = 10) => {
 };
 
 exports.uploadDocument = async (file, userId) => {
-  try {
-    const documentUrl = await uploadFileToS3(file, userId);
+  const documentUrl = await uploadFileToS3(file, userId);
 
-    // Update the user document URL in the database
-    const [updatedRowCount] = await User.update({ document_url: documentUrl }, { where: { id: userId } });
+  const [updatedRowCount] = await User.update({ document_url: documentUrl }, { where: { id: userId } });
 
-    if (updatedRowCount === 0) {
-      throw new Error('User not found or document URL could not be updated.');
-    }
-
-    return {
-      message: 'Document uploaded successfully.',
-      documentUrl,
-    };
-  } catch (error) {
-    console.error('Error uploading document to S3:', error);
-    throw new Error('Failed to upload document.');
+  if (updatedRowCount === 0) {
+    throw new ApiError(404, 'User not found or document URL could not be updated');
   }
+
+  return {
+    message: 'Document uploaded successfully.',
+    documentUrl,
+  };
 };
 
 exports.verifyUserDocument = async userId => {
   const user = await User.findByPk(userId);
   if (!user) {
-    throw new Error('User not found');
+    throw new ApiError(404, 'User not found');
   }
 
   if (!user.document_url) {
-    throw new Error('User document not found');
+    throw new ApiError(400, 'User document not found');
   }
 
   user.is_document_verified = true;
