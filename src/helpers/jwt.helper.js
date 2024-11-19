@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { redisClient } = require('../config/redis');
+const { ApiError } = require('../helpers/response.helper');
 
 function generateToken(userId) {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
@@ -20,10 +21,9 @@ async function blacklistToken(token) {
 async function verifyToken(token) {
   const isBlacklisted = await redisClient.get(`blacklist_${token}`);
   if (isBlacklisted) {
-    throw new Error('Token is blacklisted');
+    throw new ApiError(401, 'Token is blacklisted');
   }
 
-  // If not blacklisted, verify the token
   return jwt.verify(token, process.env.JWT_SECRET);
 }
 

@@ -1,4 +1,5 @@
 const { cityTiers } = require('../constants/cities');
+const { ApiError } = require('../helpers/response.helper');
 
 function extractCityFromAddress(address) {
   const addressParts = address.split(',').map(part => part.trim());
@@ -9,7 +10,7 @@ function extractCityFromAddress(address) {
     }
   }
 
-  throw new Error('City not found in the provided address');
+  throw new ApiError(404, 'City not found in the provided address');
 }
 
 function getCityTier(city) {
@@ -35,7 +36,10 @@ function calculatePrice(rate, shipmentData) {
   const finalPrice = (initialPrice + weightPrice + sizePrice) * multiplier;
 
   if (isNaN(finalPrice)) {
-    throw new Error('Calculation resulted in an invalid number. Please check rate and shipment data.');
+    throw new ApiError(
+      400,
+      'Calculation resulted in an invalid number. Please check rate and shipment data.'
+    );
   }
 
   return finalPrice.toFixed(2);

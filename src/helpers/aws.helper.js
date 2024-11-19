@@ -1,6 +1,7 @@
 const { PutObjectCommand } = require('@aws-sdk/client-s3');
 const fs = require('fs').promises;
 const s3Client = require('../utils/aws');
+const { ApiError } = require('../helpers/response.helper');
 require('dotenv').config();
 
 const generateFileName = (originalFileName, uniqueName) => {
@@ -31,7 +32,7 @@ async function uploadFileToS3(file, userId) {
   } catch (error) {
     console.error('Error uploading file to S3:', error);
     fs.unlink(file.path);
-    throw new Error('Failed to upload file.');
+    throw new ApiError(400, 'Failed to upload file to S3.');
   }
 }
 
