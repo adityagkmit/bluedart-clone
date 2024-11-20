@@ -3,10 +3,12 @@ const { ApiResponse, ApiError } = require('../helpers/response.helper');
 
 const getAllUsers = async (req, res) => {
   try {
-    const users = await userService.getAllUsers();
+    const { page = 1, limit = 10 } = req.query;
+    const users = await userService.getAllUsers(Number(page), Number(limit));
     ApiResponse.send(res, 200, 'Users retrieved successfully', users);
   } catch (error) {
-    ApiError.handleError(new ApiError(400, error.message), res);
+    console.error('Error retrieving users:', error);
+    ApiError.handleError(new ApiError(400, 'Failed to retrieve users.'), res);
   }
 };
 

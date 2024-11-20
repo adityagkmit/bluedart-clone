@@ -32,24 +32,35 @@ const createUser = async ({ name, email, password, phone_number }) => {
   return user;
 };
 
-const getAllUsers = async () => {
-  const users = await User.findAll({
+const getAllUsers = async (page = 1, limit = 10) => {
+  const offset = (page - 1) * limit;
+
+  const { count, rows } = await User.findAndCountAll({
     include: {
       model: Role,
       through: { attributes: [] },
+      attributes: ['name'],
     },
+    offset,
+    limit,
+    order: [['created_at', 'DESC']],
   });
 
-  return users.map(user => ({
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    phone_number: user.phone_number,
-    document_url: user.document_url,
-    created_at: user.created_at,
-    updated_at: user.updated_at,
-    roles: user.Roles.map(role => role.name),
-  }));
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    users: rows.map(user => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone_number: user.phone_number,
+      document_url: user.document_url,
+      created_at: user.created_at,
+      updated_at: user.updated_at,
+      roles: user.Roles.map(role => role.name),
+    })),
+  };
 };
 
 const getUserById = async userId => {

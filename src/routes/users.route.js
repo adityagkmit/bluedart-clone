@@ -9,8 +9,8 @@ const paginationSchema = require('../validators/pagination.validator');
 const upload = require('../middlewares/multer.middleware');
 
 // Routes for user operations
-router.get('/', auth, roles(), userController.getAllUsers);
-router.post('/', auth, roles(), validate(createUserSchema), userController.createUser);
+router.get('/', auth, roles('Admin'), validate(paginationSchema, false, true), userController.getAllUsers);
+router.post('/', auth, roles('Admin'), validate(createUserSchema), userController.createUser);
 router.get('/:id', auth, validate(userIdValidateSchema, true), userController.getUserById);
 
 router.put(
