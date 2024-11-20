@@ -12,7 +12,7 @@ const sendOtp = async email => {
   console.log(otp);
   await sendOtpEmail(email, otp);
 
-  return { message: 'OTP sent to email' };
+  return { otp };
 };
 
 const verifyOtp = async ({ email, otp }) => {
