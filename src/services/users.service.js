@@ -188,7 +188,6 @@ const uploadDocument = async (file, userId) => {
   }
 
   return {
-    message: 'Document uploaded successfully.',
     documentUrl,
   };
 };
