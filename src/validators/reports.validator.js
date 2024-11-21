@@ -7,9 +7,6 @@ const shipmentReportSchema = Joi.object({
   endDate: Joi.date().iso().min(Joi.ref('startDate')),
   maxPrice: Joi.number().positive(),
   user_id: Joi.string().uuid(),
-  roles: Joi.array()
-    .items(Joi.string().valid('Admin', 'Customer', 'Delivery Agent'))
-    .required(),
 });
 
 // Customer Report Validator

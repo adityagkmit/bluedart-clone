@@ -1,108 +1,124 @@
-const { ApiError, ApiResponse } = require('../helpers/response.helper');
+const { ApiError } = require('../helpers/response.helper');
 const shipmentService = require('../services/shipments.service');
 
-const createShipment = async (req, res) => {
+// Create Shipment
+const createShipment = async (req, res, next) => {
   try {
     const shipment = await shipmentService.createShipment(req.body, req.user.id);
-    return ApiResponse.send(res, 201, 'Shipment created successfully', shipment);
+    res.data = shipment;
+    res.message = 'Shipment created successfully';
+    res.statusCode = 201;
+    next();
   } catch (error) {
-    console.error('Error creating shipment:', error);
-    return ApiError.handleError(new ApiError(400, error.message), res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const getShipments = async (req, res) => {
+// Get Shipments
+const getShipments = async (req, res, next) => {
   try {
     const { page, limit, ...filters } = req.query;
     const shipments = await shipmentService.getShipments(filters, page, limit);
-    return ApiResponse.send(res, 200, 'Shipments retrieved successfully', shipments);
+    res.data = shipments;
+    res.message = 'Shipments retrieved successfully';
+    next();
   } catch (error) {
-    console.error('Error fetching shipments:', error);
-    return ApiError.handleError(new ApiError(400, 'An error occurred while fetching shipments.'), res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const getShipmentById = async (req, res) => {
+// Get Shipment by ID
+const getShipmentById = async (req, res, next) => {
   try {
     const shipment = await shipmentService.getShipmentById(req.params.id);
     if (!shipment) {
-      return ApiError.handleError(new ApiError(404, 'Shipment not found'), res);
+      return next(new ApiError(404, 'Shipment not found'));
     }
-    return ApiResponse.send(res, 200, 'Shipment retrieved successfully', shipment);
+    res.data = shipment;
+    res.message = 'Shipment retrieved successfully';
+    next();
   } catch (error) {
-    console.error('Error fetching shipment by ID:', error);
-    return ApiError.handleError(new ApiError(400, error.message), res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const getShipmentStatuses = async (req, res) => {
+// Get Shipment Statuses
+const getShipmentStatuses = async (req, res, next) => {
   try {
     const shipmentId = req.params.id;
     const statuses = await shipmentService.getShipmentStatuses(shipmentId);
-    ApiResponse.send(res, 200, 'Shipment statuses retrieved successfully', statuses);
+    res.data = statuses;
+    res.message = 'Shipment statuses retrieved successfully';
+    next();
   } catch (error) {
-    ApiError.handleError(error, res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const updateShipment = async (req, res) => {
+// Update Shipment
+const updateShipment = async (req, res, next) => {
   try {
     const updatedShipment = await shipmentService.updateShipment(req.params.id, req.body);
     if (!updatedShipment) {
-      return ApiError.handleError(new ApiError(404, 'Shipment not found'), res);
+      return next(new ApiError(404, 'Shipment not found'));
     }
-    return ApiResponse.send(res, 200, 'Shipment updated successfully', updatedShipment);
+    res.data = updatedShipment;
+    res.message = 'Shipment updated successfully';
+    next();
   } catch (error) {
-    console.error('Error updating shipment:', error);
-    return ApiError.handleError(new ApiError(400, error.message), res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const deleteShipment = async (req, res) => {
+// Delete Shipment
+const deleteShipment = async (req, res, next) => {
   try {
     const result = await shipmentService.deleteShipment(req.params.id, req.user);
     if (!result) {
-      return ApiError.handleError(new ApiError(404, 'Shipment not found'), res);
+      return next(new ApiError(404, 'Shipment not found'));
     }
-    return ApiResponse.send(res, 200, 'Shipment deleted successfully');
+    res.data = null;
+    res.message = 'Shipment deleted successfully';
+    next();
   } catch (error) {
-    console.error('Error deleting shipment:', error);
-    return ApiError.handleError(new ApiError(400, error.message), res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const updateShipmentStatus = async (req, res) => {
+// Update Shipment Status
+const updateShipmentStatus = async (req, res, next) => {
   try {
     const updatedShipment = await shipmentService.updateShipmentStatus(req.params.id, req.body.status);
     if (!updatedShipment) {
-      return ApiError.handleError(new ApiError(404, 'Shipment not found'), res);
+      return next(new ApiError(404, 'Shipment not found'));
     }
-    return ApiResponse.send(res, 200, 'Shipment status updated successfully', updatedShipment);
+    res.data = updatedShipment;
+    res.message = 'Shipment status updated successfully';
+    next();
   } catch (error) {
-    console.error('Error updating shipment status:', error);
-    return ApiError.handleError(new ApiError(400, error.message), res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const assignDeliveryAgent = async (req, res) => {
+// Assign Delivery Agent
+const assignDeliveryAgent = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { delivery_agent_id } = req.body;
     const updatedShipment = await shipmentService.assignDeliveryAgent(id, delivery_agent_id);
     if (!updatedShipment) {
-      return ApiError.handleError(new ApiError(404, 'Shipment not found or could not be updated'), res);
+      return next(new ApiError(404, 'Shipment not found or could not be updated'));
     }
-    return ApiResponse.send(res, 200, 'Delivery agent assigned successfully', updatedShipment);
+    res.data = updatedShipment;
+    res.message = 'Delivery agent assigned successfully';
+    next();
   } catch (error) {
-    console.error('Error assigning delivery agent:', error);
-    return ApiError.handleError(
-      new ApiError(400, 'An error occurred while assigning the delivery agent'),
-      res
-    );
+    next(new ApiError(400, error.message));
   }
 };
 
-const rescheduleShipment = async (req, res) => {
+// Reschedule Shipment
+const rescheduleShipment = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { preferred_delivery_date, preferred_delivery_time } = req.body;
@@ -117,13 +133,14 @@ const rescheduleShipment = async (req, res) => {
     });
 
     if (!updatedShipment) {
-      return ApiError.handleError(new ApiError(404, 'Shipment not found or cannot be rescheduled'), res);
+      return next(new ApiError(404, 'Shipment not found or cannot be rescheduled'));
     }
 
-    return ApiResponse.send(res, 200, 'Delivery rescheduled successfully', updatedShipment);
+    res.data = updatedShipment;
+    res.message = 'Delivery rescheduled successfully';
+    next();
   } catch (error) {
-    console.error('Error rescheduling shipment:', error);
-    return ApiError.handleError(new ApiError(400, error.message), res);
+    next(new ApiError(400, error.message));
   }
 };
 

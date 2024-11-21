@@ -1,99 +1,118 @@
+const { ApiError } = require('../helpers/response.helper');
 const userService = require('../services/users.service');
-const { ApiResponse, ApiError } = require('../helpers/response.helper');
 
-const getAllUsers = async (req, res) => {
+// Get All Users
+const getAllUsers = async (req, res, next) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const users = await userService.getAllUsers(Number(page), Number(limit));
-    ApiResponse.send(res, 200, 'Users retrieved successfully', users);
+    res.data = users;
+    res.message = 'Users retrieved successfully';
+    next();
   } catch (error) {
-    console.error('Error retrieving users:', error);
-    ApiError.handleError(new ApiError(400, 'Failed to retrieve users.'), res);
+    next(new ApiError(400, 'Failed to retrieve users', [error.message]));
   }
 };
 
-const getUserById = async (req, res) => {
+// Get User By ID
+const getUserById = async (req, res, next) => {
   try {
     const user = await userService.getUserById(req.params.id);
     if (!user) {
-      return ApiError.handleError(new ApiError(404, 'User not found'), res);
+      return next(new ApiError(404, 'User not found'));
     }
-    ApiResponse.send(res, 200, 'User retrieved successfully', user);
+    res.data = user;
+    res.message = 'User retrieved successfully';
+    next();
   } catch (error) {
-    ApiError.handleError(new ApiError(400, error.message), res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const createUser = async (req, res) => {
+// Create User
+const createUser = async (req, res, next) => {
   try {
     const newUser = await userService.createUserByAdmin(req.body);
-    ApiResponse.send(res, 201, 'User created successfully', newUser);
+    res.data = newUser;
+    res.message = 'User created successfully';
+    res.statusCode = 201;
+    next();
   } catch (error) {
-    ApiError.handleError(new ApiError(400, error.message), res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const updateUser = async (req, res) => {
+// Update User
+const updateUser = async (req, res, next) => {
   try {
     const userId = req.params.id;
     const updatedUser = await userService.updateUserById(userId, req.body);
 
     if (!updatedUser) {
-      return ApiError.handleError(new ApiError(404, 'User not found or no changes made'), res);
+      return next(new ApiError(404, 'User not found or no changes made'));
     }
 
-    ApiResponse.send(res, 200, 'User updated successfully', updatedUser);
+    res.data = updatedUser;
+    res.message = 'User updated successfully';
+    next();
   } catch (error) {
-    console.error('Error updating user:', error.message);
-    ApiError.handleError(new ApiError(400, error.message), res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const deleteUser = async (req, res) => {
+// Delete User
+const deleteUser = async (req, res, next) => {
   try {
     const userId = req.params.id;
     await userService.deleteUserById(userId);
-    ApiResponse.send(res, 200, 'User deleted successfully');
+    res.data = null;
+    res.message = 'User deleted successfully';
+    next();
   } catch (error) {
-    console.error('Error deleting user:', error.message);
-    ApiError.handleError(new ApiError(400, error.message), res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const getUserPayments = async (req, res) => {
+// Get User Payments
+const getUserPayments = async (req, res, next) => {
   try {
     const { id } = req.params;
-
     const { page, limit } = req.query;
     const payments = await userService.getPaymentsByUserId(id, page, limit);
-    ApiResponse.send(res, 200, 'User payments retrieved successfully', payments);
+    res.data = payments;
+    res.message = 'User payments retrieved successfully';
+    next();
   } catch (error) {
-    ApiError.handleError(error, res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const uploadDocument = async (req, res) => {
+// Upload Document
+const uploadDocument = async (req, res, next) => {
   try {
     if (!req.file) {
-      return ApiError.handleError(new ApiError(400, 'No document uploaded.'), res);
+      return next(new ApiError(400, 'No document uploaded.'));
     }
 
     const result = await userService.uploadDocument(req.file, req.user.id);
-    ApiResponse.send(res, 200, 'Document uploaded successfully', result);
+    res.data = result;
+    res.message = 'Document uploaded successfully';
+    next();
   } catch (error) {
-    console.error('Error during document upload:', error);
-    ApiError.handleError(new ApiError(400, error.message), res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const verifyDocument = async (req, res) => {
+// Verify Document
+const verifyDocument = async (req, res, next) => {
   try {
     const { id } = req.params;
-
     const user = await userService.verifyUserDocument(id);
-    return ApiResponse.send(res, 200, 'Document verified successfully', user);
+    res.data = user;
+    res.message = 'Document verified successfully';
+    next();
   } catch (error) {
-    ApiError.handleError(error, res);
+    next(new ApiError(400, error.message));
   }
 };
 

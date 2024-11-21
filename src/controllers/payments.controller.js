@@ -1,55 +1,67 @@
 const paymentService = require('../services/payments.service');
-const { ApiResponse, ApiError } = require('../helpers/response.helper');
+const { ApiError } = require('../helpers/response.helper');
 
-const createPayment = async (req, res) => {
+// Create Payment
+const createPayment = async (req, res, next) => {
   try {
     const payment = await paymentService.createPayment(req.body, req.user);
-    ApiResponse.send(res, 201, 'Payment created and processed successfully', payment);
+    res.data = payment;
+    res.message = 'Payment created successfully';
+    res.statusCode = 201;
+    next();
   } catch (error) {
-    console.log(error);
-    ApiError.handleError(error, res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const completeCODPayment = async (req, res) => {
+// Get Payment by ID
+const getPaymentById = async (req, res, next) => {
   try {
-    const payment = await paymentService.completeCODPayment(req.params.id, req.user);
-    ApiResponse.send(res, 200, 'Payment status updated successfully', payment);
+    const payment = await paymentService.getPaymentById(req.params.id, req.user);
+    if (!payment) {
+      return next(new ApiError(404, 'Payment not found'));
+    }
+    res.data = payment;
+    res.message = 'Payment details retrieved successfully';
+    next();
   } catch (error) {
-    ApiError.handleError(error, res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const getPaymentById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const payment = await paymentService.getPaymentById(id, req.user);
-    ApiResponse.send(res, 200, 'Payment details retrieved successfully', payment);
-  } catch (error) {
-    ApiError.handleError(error, res);
-  }
-};
-
-const getPayments = async (req, res) => {
+// Get Payments (Paginated)
+const getPayments = async (req, res, next) => {
   try {
     const { page, limit, ...filters } = req.query;
 
-    // If the user is not an Admin, restrict results to their own payments
     if (!req.user.Roles.some(role => role.name === 'Admin')) {
       filters.user_id = req.user.id;
     }
 
     const payments = await paymentService.getPayments(filters, page, limit);
-    return ApiResponse.send(res, 200, 'Payments retrieved successfully', payments);
+    res.data = payments;
+    res.message = 'Payments retrieved successfully';
+    next();
   } catch (error) {
-    console.error('Error fetching payments:', error);
-    return ApiError.handleError(new ApiError(400, 'An error occurred while fetching payments.'), res);
+    next(new ApiError(400, error.message));
+  }
+};
+
+// Complete COD Payment
+const completeCODPayment = async (req, res, next) => {
+  try {
+    const payment = await paymentService.completeCODPayment(req.params.id, req.user);
+    res.data = payment;
+    res.message = 'Payment status updated successfully';
+    next();
+  } catch (error) {
+    next(new ApiError(400, error.message));
   }
 };
 
 module.exports = {
   createPayment,
-  completeCODPayment,
   getPaymentById,
   getPayments,
+  completeCODPayment,
 };

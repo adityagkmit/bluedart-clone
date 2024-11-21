@@ -1,56 +1,72 @@
-const { ApiResponse, ApiError } = require('../helpers/response.helper');
+const { ApiError } = require('../helpers/response.helper');
 const authService = require('../services/auth.service');
 
-const sendOtp = async (req, res) => {
+// Send OTP
+const sendOtp = async (req, res, next) => {
   try {
-    const result = await authService.sendOtp(req.body.email);
-    ApiResponse.send(res, 200, 'OTP sent successfully', result);
+    const otp = await authService.sendOtp(req.body.email);
+    res.data = otp;
+    res.message = 'OTP sent successfully';
+    next();
   } catch (error) {
-    ApiError.handleError(new ApiError(400, error.message), res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const verifyOtp = async (req, res) => {
+// Verify OTP
+const verifyOtp = async (req, res, next) => {
   try {
     const isValid = await authService.verifyOtp(req.body);
     if (!isValid) {
-      return ApiError.handleError(new ApiError(400, 'Invalid or expired OTP'), res);
+      return next(new ApiError(400, 'Invalid or expired OTP'));
     }
-    ApiResponse.send(res, 200, 'OTP verified successfully');
+    res.data = null;
+    res.message = 'OTP verified successfully';
+    next();
   } catch (error) {
-    ApiError.handleError(new ApiError(400, error.message), res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const register = async (req, res) => {
+// Register User
+const register = async (req, res, next) => {
   try {
     const user = await authService.registerUser(req.body);
-    ApiResponse.send(res, 201, 'User registered successfully', user);
+    res.data = user;
+    res.message = 'User registered successfully';
+    res.statusCode = 201;
+    next();
   } catch (error) {
-    ApiError.handleError(new ApiError(400, error.message), res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const login = async (req, res) => {
+// Login User
+const login = async (req, res, next) => {
   try {
     const result = await authService.loginUser(req.body);
-    ApiResponse.send(res, 200, 'Login successful', result);
+    res.data = result;
+    res.message = 'Login successful';
+    next();
   } catch (error) {
-    ApiError.handleError(new ApiError(401, 'Invalid credentials', [error.message]), res);
+    next(new ApiError(401, 'Invalid credentials', [error.message]));
   }
 };
 
-const logout = async (req, res) => {
+// Logout User
+const logout = async (req, res, next) => {
   const token = req.headers['authorization']?.replace('Bearer ', '');
   if (!token) {
-    return ApiError.handleError(new ApiError(400, 'Token not provided'), res);
+    return next(new ApiError(400, 'Token not provided'));
   }
 
   try {
     await authService.logout(token);
-    ApiResponse.send(res, 200, 'Logged out successfully');
+    res.data = null;
+    res.message = 'Logged out successfully';
+    next();
   } catch (error) {
-    ApiError.handleError(new ApiError(400, 'Failed to logout', [error.message]), res);
+    next(new ApiError(400, 'Failed to logout', [error.message]));
   }
 };
 

@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const db = require('./src/models');
 const { connectToRedis } = require('./src/config/redis.js');
 const { registerRoutes } = require('./src/routes/index.js');
+const errorHandler = require('./src/middlewares/error.middleware');
 const { initializeSchedulers } = require('./src/schedulers');
 
 dotenv.config();
@@ -16,6 +17,11 @@ app.get('/', (req, res) => {
 app.use(express.json());
 
 registerRoutes(app);
+app.use(errorHandler);
+
+app.get('/test', (req, res) => {
+  res.status(200).json({ snake_case_key: 'value' });
+});
 
 connectToRedis();
 
