@@ -7,7 +7,11 @@ class ApiResponse {
   }
 
   static send(res, statusCode, message = 'Success', data = null) {
-    res.status(statusCode).json(new ApiResponse(statusCode, message, data));
+    res.status(statusCode);
+    res.data = data;
+    res.message = message; // For serializer usage
+    res.statusCode = statusCode;
+    res.json(new ApiResponse(statusCode, message, data));
   }
 }
 
@@ -18,7 +22,7 @@ class ApiError extends Error {
     this.success = false;
     this.data = null;
     this.message = message;
-    this.errors = Array.isArray(errors) ? errors : [errors]; // Ensure `errors` is always an array.
+    this.errors = Array.isArray(errors) ? errors : [errors];
 
     if (stack) {
       this.stack = stack;
@@ -29,15 +33,11 @@ class ApiError extends Error {
 
   static handleError(err, res) {
     const { statusCode = 500, message, errors } = err;
-
-    // If `errors` is empty but a stack trace exists, include it for debugging (optional).
-    const responseErrors = errors.length > 0 ? errors : [{ message: message || 'An error occurred' }];
-
     res.status(statusCode).json({
       statusCode,
       success: false,
       data: null,
-      errors: responseErrors,
+      errors: errors.length > 0 ? errors : [{ message }],
     });
   }
 }
