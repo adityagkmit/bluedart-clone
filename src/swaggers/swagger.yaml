@@ -1,0 +1,769 @@
+openapi: 3.0.3
+info:
+  title: Bluedart Clone
+  description: API documentation for Bluedart
+  version: 1.0.0
+  termsOfService: http://example.com/terms/
+  contact:
+    name: API Support
+    email: support@example.com
+    url: http://example.com/support
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://staging-api.example.com/v1
+    description: Staging server
+paths:
+  /auth/send-otp:
+    post:
+      tags:
+        - auth
+      summary: send otp for email verification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: adityasinghrajawat393@gmail.com
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': &id001
+          description: Bad Request - The server could not understand the request due
+            to invalid syntax.
+          content:
+            application/json:
+              example:
+                error: Invalid request format
+                code: 400
+        '401': &id002
+          description: Unauthorized - Authentication is required or has failed.
+          content:
+            application/json:
+              example:
+                error: Unauthorized
+                code: 401
+        '500': &id003
+          description: Internal Server Error - An unexpected error occurred on the
+            server.
+          content:
+            application/json:
+              example:
+                error: Internal server error
+                code: 500
+      description: Description for POST /auth/send-otp
+  /auth/verify-otp:
+    post:
+      tags:
+        - auth
+      summary: verify otp for email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: adityasinghrajawat393@gmail.com
+                otp: '739524'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for POST /auth/verify-otp
+  /auth/register:
+    post:
+      tags:
+        - auth
+      summary: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Aditya Singh Rajawat
+                email: adityasinghrajawat393@gmail.com
+                phone_number: '9876543948'
+                password: '123456'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for POST /auth/register
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: adityasinghrajawat393@gmail.com
+                password: '654321'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for POST /auth/login
+  /auth/logout:
+    delete:
+      tags:
+        - auth
+      summary: logout
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImY4ZjgwZDg0LWExZjgtNGY1ZS05YjMwLTQ2NDdlNzRmMDEwOCIsImlhdCI6MTczMTM0MjU1OCwiZXhwIjoxNzMxMzQ2MTU4fQ.L3K6PouPxb-WvVAntkGKx9-eXs61B2nBQwybvrB4mv8
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for DELETE /auth/logout
+  /users:
+    get:
+      tags:
+        - users
+      summary: get all users
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTM5NTA3OSwiZXhwIjoxNzMxMzk4Njc5fQ.EwKnKl-c8V5MVXXhrwe-EJ1MU25WlCyG55Ql1J_Lvcc
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for GET /users
+    post:
+      tags:
+        - users
+      summary: create user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: user3
+                email: user3@gmail.com
+                phone_number: '8765434563'
+                password: '123456'
+                roles:
+                  - Customer
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTU2MjQ2NSwiZXhwIjoxNzMxNTY2MDY1fQ.zHVXfj62RnbweSJ08OuKYd_Unz9xRQ2KW-1pJTxLAI8
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for POST /users
+  /users/{id}:
+    get:
+      tags:
+        - users
+      summary: get user by id
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTM4MDU1MywiZXhwIjoxNzMxMzg0MTUzfQ.XK_3rZtzjnSHU2pOJ9dQatvFdNkQ_17gTU125P4POOk
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 7d17a949-d1bd-46ab-a826-9b5cba7d34c9
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for GET /users/{id}
+    put:
+      tags:
+        - users
+      summary: update user by id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: user1
+                email: user1@gmail.com
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTQ5OTQyNSwiZXhwIjoxNzMxNTAzMDI1fQ.cvnMhdfq_VVY8qetN1iBNRWYM3vxug--Pe-4ixAwFK8
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: a2a84898-0f2e-4d94-8aae-134acad25e86
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for PUT /users/{id}
+    delete:
+      tags:
+        - users
+      summary: delete user by id
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTM5MzEzMSwiZXhwIjoxNzMxMzk2NzMxfQ.8DzPvgcLxtGxaOujYne9b8qSSuBrK7RtdcxxomrHH1g
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 93180d66-7648-47a6-b5fe-3d85f213941b
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for DELETE /users/{id}
+  /users/upload-document:
+    post:
+      tags:
+        - users
+      summary: upload document
+      requestBody:
+        content: {}
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for POST /users/upload-document
+  /users/{id}/verify-document:
+    patch:
+      tags:
+        - users
+      summary: verify document
+      requestBody:
+        content: {}
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for PATCH /users/{id}/verify-document
+  /users/me:
+    get:
+      tags:
+        - users
+      summary: get current user
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE5MTYwMywiZXhwIjoxNzMyMTk1MjAzfQ.VcvDHN_IBm6ZK5z5ncgC4l52Slban0wuQWz_x7In84I
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for GET /users/me
+  /shipments:
+    post:
+      tags:
+        - shipments
+      summary: create shipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                pickup_address: 123 MG Road, Bengaluru, Karnataka, 560001
+                delivery_address: 456 Park Street, Mumbai, Maharashtra, 400001
+                weight: 5
+                dimensions:
+                  length: 4
+                  width: 2.5
+                  height: 2
+                is_fragile: true
+                delivery_option: Express
+                preferred_delivery_date: '2024-12-10'
+                preferred_delivery_time: '16:00:00'
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTQ3NDAwMSwiZXhwIjoxNzMxNDc3NjAxfQ.7qJUU98RkQ_znWNt_JAmx4v70MWJQ0i2xWxSKSVi2hw
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for POST /shipments
+    get:
+      tags:
+        - shipments
+      summary: get shipments
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTQ4MDM5MSwiZXhwIjoxNzMxNDgzOTkxfQ.lGbFaQ5C2g1lnEu43PkA2JIyvCWR-yphP43cLG-DDa4
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for GET /shipments
+  /shipments/{id}:
+    get:
+      tags:
+        - shipments
+      summary: get shipment by id
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for GET /shipments/{id}
+    put:
+      tags:
+        - shipments
+      summary: update shipments by id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                pickup_address: 123 MG Road, Bengaluru, Karnataka, 560001
+                delivery_address: 456 Park Street, Mumbai, Maharashtra, 400001
+                weight: 5
+                dimensions:
+                  length: 4
+                  width: 2.5
+                  height: 2
+                is_fragile: false
+                delivery_option: Express
+                preferred_delivery_date: '2024-12-10'
+                preferred_delivery_time: '16:00:00'
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTQ5OTQyNSwiZXhwIjoxNzMxNTAzMDI1fQ.cvnMhdfq_VVY8qetN1iBNRWYM3vxug--Pe-4ixAwFK8
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 7b98248a-4b58-49d6-9c2b-e073d1128ade
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for PUT /shipments/{id}
+    delete:
+      tags:
+        - shipments
+      summary: delete shipment by id
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 8601de7c-78c9-4e76-b609-be3ad2cf76b8
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for DELETE /shipments/{id}
+  /shipments/{id}/status:
+    patch:
+      tags:
+        - shipments
+      summary: update shipment status
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                status: Pending
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTYwMDEwMCwiZXhwIjoxNzMxNjAzNzAwfQ.NU2GtBAiNzd_96TfLwICCvQFXOtkVgnC0_KQdcASop0
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 8cfcee90-0e1c-47da-984d-b6aecf8da653
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for PATCH /shipments/{id}/status
+  /shipments/{id}/assign-agent:
+    patch:
+      tags:
+        - shipments
+      summary: assign delivery agent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                delivery_agent_id: a2a84898-0f2e-4d94-8aae-134acad25e86
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 8601de7c-78c9-4e76-b609-be3ad2cf76b8
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for PATCH /shipments/{id}/assign-agent
+  /shipments/{id}/statuses:
+    get:
+      tags:
+        - shipments
+      summary: get shipment statuses
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 463e31b1-857e-4688-a5ef-8232a4323343
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for GET /shipments/{id}/statuses
+  /shipments/{id}/reschedule:
+    patch:
+      tags:
+        - shipments
+      summary: reschedule delivery
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                preferred_delivery_date: '2024-12-15'
+                preferred_delivery_time: '14:00:00'
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 7737248c-52b5-45ec-9c9b-199464b51f40
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for PATCH /shipments/{id}/reschedule
+  /statuses:
+    post:
+      tags:
+        - statuses
+      summary: create status
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                shipment_id: 463e31b1-857e-4688-a5ef-8232a4323343
+                name: Delivered
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTYzODg1NCwiZXhwIjoxNzMxNjQyNDU0fQ.fu9NNXH7K5eET38bw8E7dUuDLN94hCg8KsRrzIP2uzQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for POST /statuses
+  /statuses/{id}:
+    delete:
+      tags:
+        - statuses
+      summary: delete status by id
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for DELETE /statuses/{id}
+  /payments:
+    post:
+      tags:
+        - payments
+      summary: create payment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                shipment_id: 123e4567-e89b-12d3-a456-426614174000
+                method: Online
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for POST /payments
+    get:
+      tags:
+        - payments
+      summary: get payments
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTc0NDk2MiwiZXhwIjoxNzMxNzQ4NTYyfQ.axEXhdQ-5AV0XDynYLyryiJongIRQG2Njxh5b78oqLE
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for GET /payments
+  /reports/shipments:
+    post:
+      tags:
+        - reports
+      summary: generate shipment report
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                dateFrom: '2024-01-01'
+                dateTo: '2024-11-30'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for POST /reports/shipments
+  /reports/customers:
+    post:
+      tags:
+        - reports
+      summary: generate customer report
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                startDate: '2023-01-01'
+                endDate: '2024-12-31'
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTg1ODI5OSwiZXhwIjoxNzMxODYxODk5fQ._4qftoDlsY75khSSiWZilGh7wa2xkNbzlIGtk8_Q7hU
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      description: Description for POST /reports/customers
+components:
+  schemas: {}
+  responses: {}
+  parameters: {}
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - BearerAuth: []
+tags:
+  - name: auth
+  - name: users
+  - name: shipments
+  - name: statuses
+  - name: payments
+  - name: reports

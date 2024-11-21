@@ -5,10 +5,19 @@ const { connectToRedis } = require('./src/config/redis.js');
 const { registerRoutes } = require('./src/routes/index.js');
 const errorHandler = require('./src/middlewares/error.middleware');
 const { initializeSchedulers } = require('./src/schedulers');
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const path = require('path');
 
 dotenv.config();
 
 const app = express();
+
+// Load Swagger YAML
+const swaggerDocument = YAML.load(path.join(__dirname, 'src/swaggers/swagger.yaml'));
+
+// Set up Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.get('/', (req, res) => {
   res.send('Hello Word');
@@ -17,11 +26,8 @@ app.get('/', (req, res) => {
 app.use(express.json());
 
 registerRoutes(app);
-app.use(errorHandler);
 
-app.get('/test', (req, res) => {
-  res.status(200).json({ snake_case_key: 'value' });
-});
+app.use(errorHandler);
 
 connectToRedis();
 
