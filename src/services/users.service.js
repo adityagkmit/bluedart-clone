@@ -4,30 +4,44 @@ const { uploadFileToS3 } = require('../helpers/aws.helper');
 const bcrypt = require('bcryptjs');
 const { ApiError } = require('../helpers/response.helper');
 
-const createUser = async ({ name, email, password, phone_number }) => {
-  const userExists = await User.findOne({ where: { email } });
-  if (userExists) {
-    throw new ApiError(400, 'User already exists');
+const createUser = async ({ name, email, password, phone_number, roleName = 'Customer' }) => {
+  const role = await Role.findOne({ where: { name: roleName } });
+
+  if (!role) {
+    throw new ApiError(404, `${roleName} role not found. Ensure roles are seeded in the database.`);
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const user = await User.create({
-    name,
-    email,
-    password: hashedPassword,
-    phone_number,
+  let user = await User.findOne({
+    where: { email },
+    include: {
+      model: Role,
+      as: 'Roles',
+      attributes: ['id', 'name'],
+    },
   });
 
-  const customerRole = await Role.findOne({ where: { name: 'Customer' } });
-  if (!customerRole) {
-    throw new ApiError(404, 'Customer role not found. Ensure roles are seeded in the database.');
+  if (user) {
+    const hasRole = user.Roles.some(existingRole => existingRole.name === roleName);
+
+    if (hasRole) {
+      throw new ApiError(400, `User with email '${email}' already has the '${roleName}' role.`);
+    }
+
+    await user.addRole(role);
+  } else {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      phone_number,
+    });
+
+    await user.addRole(role);
+
+    await redisClient.del(`${email}_verified`);
   }
-
-  // Associate the user with the 'Customer' role
-  await user.addRole(customerRole);
-
-  await redisClient.del(`${email}_verified`);
 
   return user;
 };

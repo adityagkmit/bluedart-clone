@@ -11,6 +11,8 @@ const { userSerializer } = require('../serializers/users.serializer');
 const applySerializer = require('../middlewares/serializer.middleware');
 const responseHandler = require('../middlewares/response.middleware');
 
+router.get('/me', auth, userController.getCurrentUser, applySerializer(userSerializer), responseHandler);
+
 router.get(
   '/',
   auth,
