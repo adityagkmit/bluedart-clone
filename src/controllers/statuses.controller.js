@@ -1,33 +1,43 @@
 const statusService = require('../services/statuses.service');
-const { ApiResponse, ApiError } = require('../helpers/response.helper');
+const { ApiError } = require('../helpers/response.helper');
 
-const createStatus = async (req, res) => {
+// Create Status
+const createStatus = async (req, res, next) => {
   try {
     const status = await statusService.createStatus(req.body, req.user);
-    ApiResponse.send(res, 201, 'Status created successfully', status);
+    res.data = status;
+    res.message = 'Status created successfully';
+    res.statusCode = 201;
+    next();
   } catch (error) {
-    ApiError.handleError(error, res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const getStatusById = async (req, res) => {
+// Get Status by ID
+const getStatusById = async (req, res, next) => {
   try {
     const status = await statusService.getStatusById(req.params.id);
     if (!status) {
-      return ApiResponse.send(res, 404, 'Status not found');
+      return next(new ApiError(404, 'Status not found'));
     }
-    ApiResponse.send(res, 200, 'Status retrieved successfully', status);
+    res.data = status;
+    res.message = 'Status retrieved successfully';
+    next();
   } catch (error) {
-    ApiError.handleError(error, res);
+    next(new ApiError(400, error.message));
   }
 };
 
-const deleteStatus = async (req, res) => {
+// Delete Status
+const deleteStatus = async (req, res, next) => {
   try {
     await statusService.deleteStatus(req.params.id, req.user);
-    ApiResponse.send(res, 200, 'Status deleted successfully');
+    res.data = null;
+    res.message = 'Status deleted successfully';
+    next();
   } catch (error) {
-    ApiError.handleError(error, res);
+    next(new ApiError(400, error.message));
   }
 };
 
