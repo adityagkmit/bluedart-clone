@@ -1,10 +1,13 @@
 const express = require('express');
 const paymentController = require('../controllers/payments.controller');
+const validate = require('../middlewares/validator.middleware');
+const { createPaymentSchema, paymentIdValidateSchema } = require('../validators/payments.validator');
 const { auth } = require('../middlewares/auth.middleware');
 const roles = require('../middlewares/role.middleware');
-const validate = require('../middlewares/validator.middleware');
 const checkDocumentVerified = require('../middlewares/document.middleware');
-const { createPaymentSchema, paymentIdValidateSchema } = require('../validators/payments.validator');
+const responseHandler = require('../middlewares/response.middleware');
+const paymentsSerializer = require('../serializers/payments.serializer');
+const applySerializer = require('../middlewares/serializer.middleware');
 
 const router = express.Router();
 
@@ -14,7 +17,9 @@ router.post(
   checkDocumentVerified,
   roles(['Customer']),
   validate(createPaymentSchema),
-  paymentController.createPayment
+  paymentController.createPayment,
+  applySerializer(paymentsSerializer),
+  responseHandler
 );
 
 router.patch(
@@ -23,7 +28,9 @@ router.patch(
   checkDocumentVerified,
   roles(['Delivery Agent']),
   validate(paymentIdValidateSchema, true),
-  paymentController.completeCODPayment
+  paymentController.completeCODPayment,
+  applySerializer(paymentsSerializer),
+  responseHandler
 );
 
 router.get(
@@ -32,9 +39,19 @@ router.get(
   checkDocumentVerified,
   roles(['Admin', 'Delivery Agent', 'Customer']),
   validate(paymentIdValidateSchema, true),
-  paymentController.getPaymentById
+  paymentController.getPaymentById,
+  applySerializer(paymentsSerializer),
+  responseHandler
 );
 
-router.get('/', auth, checkDocumentVerified, roles(['Admin', 'Customer']), paymentController.getPayments);
+router.get(
+  '/',
+  auth,
+  checkDocumentVerified,
+  roles(['Admin', 'Customer']),
+  paymentController.getPayments,
+  applySerializer(paymentsSerializer),
+  responseHandler
+);
 
 module.exports = router;
