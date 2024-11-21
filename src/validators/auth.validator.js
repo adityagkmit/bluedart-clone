@@ -16,6 +16,7 @@ const registerSchema = Joi.object({
     .pattern(/^[0-9]{10}$/)
     .required(),
   password: Joi.string().min(6).required(),
+  roleName: Joi.string().valid('Customer', 'Delivery Agent').default('Customer'),
 });
 
 const loginSchema = Joi.object({

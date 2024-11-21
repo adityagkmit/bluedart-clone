@@ -1,6 +1,17 @@
 const { ApiError } = require('../helpers/response.helper');
 const userService = require('../services/users.service');
 
+const getCurrentUser = async (req, res, next) => {
+  try {
+    res.data = req.user;
+    res.message = 'User details retrieved successfully';
+    next();
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    next(new ApiError(400, 'Failed to retrieve user details.'));
+  }
+};
+
 // Get All Users
 const getAllUsers = async (req, res, next) => {
   try {
@@ -117,6 +128,7 @@ const verifyDocument = async (req, res, next) => {
 };
 
 module.exports = {
+  getCurrentUser,
   getAllUsers,
   getUserById,
   createUser,
