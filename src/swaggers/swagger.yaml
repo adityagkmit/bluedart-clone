@@ -1,21 +1,23 @@
-openapi: 3.0.3
+openapi: 3.0.0
 info:
-  title: Bluedart Clone
-  description: API documentation for Bluedart
+  title: bluedart-clone
   version: 1.0.0
-  termsOfService: http://example.com/terms/
-  contact:
-    name: API Support
-    email: support@example.com
-    url: http://example.com/support
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
 servers:
-  - url: https://api.example.com/v1
-    description: Production server
-  - url: https://staging-api.example.com/v1
-    description: Staging server
+  - url: http://localhost:3000/api
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+security:
+  - bearerAuth: []
+tags:
+  - name: auth
+  - name: users
+  - name: shipments
+  - name: statuses
+  - name: payments
+  - name: reports
 paths:
   /auth/send-otp:
     post:
@@ -28,36 +30,12 @@ paths:
             schema:
               type: object
               example:
-                email: adityasinghrajawat393@gmail.com
+                email: user11@gmail.com
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': &id001
-          description: Bad Request - The server could not understand the request due
-            to invalid syntax.
-          content:
-            application/json:
-              example:
-                error: Invalid request format
-                code: 400
-        '401': &id002
-          description: Unauthorized - Authentication is required or has failed.
-          content:
-            application/json:
-              example:
-                error: Unauthorized
-                code: 401
-        '500': &id003
-          description: Internal Server Error - An unexpected error occurred on the
-            server.
-          content:
-            application/json:
-              example:
-                error: Internal server error
-                code: 500
-      description: Description for POST /auth/send-otp
   /auth/verify-otp:
     post:
       tags:
@@ -69,17 +47,13 @@ paths:
             schema:
               type: object
               example:
-                email: adityasinghrajawat393@gmail.com
-                otp: '739524'
+                email: user11@gmail.com
+                otp: '340569'
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for POST /auth/verify-otp
   /auth/register:
     post:
       tags:
@@ -91,19 +65,16 @@ paths:
             schema:
               type: object
               example:
-                name: Aditya Singh Rajawat
-                email: adityasinghrajawat393@gmail.com
-                phone_number: '9876543948'
+                name: user 11
+                email: user11@gmail.com
+                phone_number: '9873543234'
                 password: '123456'
+                roleName: Delivery Agent
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for POST /auth/register
   /auth/login:
     post:
       tags:
@@ -124,10 +95,6 @@ paths:
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for POST /auth/login
   /auth/logout:
     delete:
       tags:
@@ -138,40 +105,34 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImY4ZjgwZDg0LWExZjgtNGY1ZS05YjMwLTQ2NDdlNzRmMDEwOCIsImlhdCI6MTczMTM0MjU1OCwiZXhwIjoxNzMxMzQ2MTU4fQ.L3K6PouPxb-WvVAntkGKx9-eXs61B2nBQwybvrB4mv8
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjEyODY0NiwiZXhwIjoxNzMyMTMyMjQ2fQ.Ho4OWc1EZTRiZxTuwhtaLwG69Rs7YjkbPDJswiXCXTc
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for DELETE /auth/logout
   /users:
     get:
       tags:
         - users
-      summary: get all users
+      summary: get all users (ADMIN)
       parameters:
         - name: Authorization
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTM5NTA3OSwiZXhwIjoxNzMxMzk4Njc5fQ.EwKnKl-c8V5MVXXhrwe-EJ1MU25WlCyG55Ql1J_Lvcc
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTM5NTA3OSwiZXhwIjoxNzMxMzk4Njc5fQ.EwKnKl-c8V5MVXXhrwe-EJ1MU25WlCyG55Ql1J_Lvcc
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for GET /users
     post:
       tags:
         - users
-      summary: create user
+      summary: create user (ADMIN)
       requestBody:
         content:
           application/json:
@@ -189,16 +150,13 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTU2MjQ2NSwiZXhwIjoxNzMxNTY2MDY1fQ.zHVXfj62RnbweSJ08OuKYd_Unz9xRQ2KW-1pJTxLAI8
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTU2MjQ2NSwiZXhwIjoxNzMxNTY2MDY1fQ.zHVXfj62RnbweSJ08OuKYd_Unz9xRQ2KW-1pJTxLAI8
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for POST /users
   /users/{id}:
     get:
       tags:
@@ -209,7 +167,8 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTM4MDU1MywiZXhwIjoxNzMxMzg0MTUzfQ.XK_3rZtzjnSHU2pOJ9dQatvFdNkQ_17gTU125P4POOk
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTM4MDU1MywiZXhwIjoxNzMxMzg0MTUzfQ.XK_3rZtzjnSHU2pOJ9dQatvFdNkQ_17gTU125P4POOk
         - name: id
           in: path
           schema:
@@ -221,10 +180,6 @@ paths:
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for GET /users/{id}
     put:
       tags:
         - users
@@ -235,14 +190,20 @@ paths:
             schema:
               type: object
               example:
-                name: user1
-                email: user1@gmail.com
+                name: user 11
+                email: user11@gmail.com
+                phone_number: '9873543234'
+                password: '123456'
+                roleName: Delivery Agent
+      security:
+        - bearerAuth: []
       parameters:
         - name: Authorization
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTQ5OTQyNSwiZXhwIjoxNzMxNTAzMDI1fQ.cvnMhdfq_VVY8qetN1iBNRWYM3vxug--Pe-4ixAwFK8
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE2NjE1NCwiZXhwIjoxNzMyMTY5NzU0fQ.mdfr5nkgv28gb6sHHX4ryg1aWHA0RGbkRrLctpAFdEM
         - name: id
           in: path
           schema:
@@ -254,10 +215,6 @@ paths:
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for PUT /users/{id}
     delete:
       tags:
         - users
@@ -267,7 +224,8 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTM5MzEzMSwiZXhwIjoxNzMxMzk2NzMxfQ.8DzPvgcLxtGxaOujYne9b8qSSuBrK7RtdcxxomrHH1g
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTM5MzEzMSwiZXhwIjoxNzMxMzk2NzMxfQ.8DzPvgcLxtGxaOujYne9b8qSSuBrK7RtdcxxomrHH1g
         - name: id
           in: path
           schema:
@@ -279,26 +237,55 @@ paths:
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for DELETE /users/{id}
+  /users/{id}/payments:
+    get:
+      tags:
+        - users
+      summary: getl user payments
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjEzMTM1MSwiZXhwIjoxNzMyMTM0OTUxfQ.EShleHqXxwo3sg771sBKWyWxJhzapsq7PrbseDsPjn0
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 7d17a949-d1bd-46ab-a826-9b5cba7d34c9
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
   /users/upload-document:
     post:
       tags:
         - users
       summary: upload document
       requestBody:
-        content: {}
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                document:
+                  type: string
+                  format: binary
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjEzMTM1MSwiZXhwIjoxNzMyMTM0OTUxfQ.EShleHqXxwo3sg771sBKWyWxJhzapsq7PrbseDsPjn0
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for POST /users/upload-document
   /users/{id}/verify-document:
     patch:
       tags:
@@ -317,10 +304,6 @@ paths:
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for PATCH /users/{id}/verify-document
   /users/me:
     get:
       tags:
@@ -331,16 +314,13 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE5MTYwMywiZXhwIjoxNzMyMTk1MjAzfQ.VcvDHN_IBm6ZK5z5ncgC4l52Slban0wuQWz_x7In84I
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE5MTYwMywiZXhwIjoxNzMyMTk1MjAzfQ.VcvDHN_IBm6ZK5z5ncgC4l52Slban0wuQWz_x7In84I
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for GET /users/me
   /shipments:
     post:
       tags:
@@ -368,16 +348,13 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTQ3NDAwMSwiZXhwIjoxNzMxNDc3NjAxfQ.7qJUU98RkQ_znWNt_JAmx4v70MWJQ0i2xWxSKSVi2hw
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTQ3NDAwMSwiZXhwIjoxNzMxNDc3NjAxfQ.7qJUU98RkQ_znWNt_JAmx4v70MWJQ0i2xWxSKSVi2hw
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for POST /shipments
     get:
       tags:
         - shipments
@@ -387,16 +364,13 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTQ4MDM5MSwiZXhwIjoxNzMxNDgzOTkxfQ.lGbFaQ5C2g1lnEu43PkA2JIyvCWR-yphP43cLG-DDa4
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTQ4MDM5MSwiZXhwIjoxNzMxNDgzOTkxfQ.lGbFaQ5C2g1lnEu43PkA2JIyvCWR-yphP43cLG-DDa4
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for GET /shipments
   /shipments/{id}:
     get:
       tags:
@@ -408,15 +382,12 @@ paths:
           schema:
             type: string
           required: true
+          example: ada02826-6fd3-4a69-b047-783fad0cd507
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for GET /shipments/{id}
     put:
       tags:
         - shipments
@@ -443,7 +414,8 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTQ5OTQyNSwiZXhwIjoxNzMxNTAzMDI1fQ.cvnMhdfq_VVY8qetN1iBNRWYM3vxug--Pe-4ixAwFK8
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTQ5OTQyNSwiZXhwIjoxNzMxNTAzMDI1fQ.cvnMhdfq_VVY8qetN1iBNRWYM3vxug--Pe-4ixAwFK8
         - name: id
           in: path
           schema:
@@ -455,10 +427,6 @@ paths:
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for PUT /shipments/{id}
     delete:
       tags:
         - shipments
@@ -468,22 +436,19 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
         - name: id
           in: path
           schema:
             type: string
           required: true
-          example: 8601de7c-78c9-4e76-b609-be3ad2cf76b8
+          example: a8748547-99af-4401-ae78-331cfe2260b9
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for DELETE /shipments/{id}
   /shipments/{id}/status:
     patch:
       tags:
@@ -501,22 +466,19 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTYwMDEwMCwiZXhwIjoxNzMxNjAzNzAwfQ.NU2GtBAiNzd_96TfLwICCvQFXOtkVgnC0_KQdcASop0
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
         - name: id
           in: path
           schema:
             type: string
           required: true
-          example: 8cfcee90-0e1c-47da-984d-b6aecf8da653
+          example: ada02826-6fd3-4a69-b047-783fad0cd507
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for PATCH /shipments/{id}/status
   /shipments/{id}/assign-agent:
     patch:
       tags:
@@ -534,22 +496,19 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
         - name: id
           in: path
           schema:
             type: string
           required: true
-          example: 8601de7c-78c9-4e76-b609-be3ad2cf76b8
+          example: ada02826-6fd3-4a69-b047-783fad0cd507
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for PATCH /shipments/{id}/assign-agent
   /shipments/{id}/statuses:
     get:
       tags:
@@ -560,7 +519,8 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
         - name: id
           in: path
           schema:
@@ -572,10 +532,6 @@ paths:
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for GET /shipments/{id}/statuses
   /shipments/{id}/reschedule:
     patch:
       tags:
@@ -594,7 +550,8 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
         - name: id
           in: path
           schema:
@@ -606,10 +563,6 @@ paths:
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for PATCH /shipments/{id}/reschedule
   /statuses:
     post:
       tags:
@@ -628,17 +581,36 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTYzODg1NCwiZXhwIjoxNzMxNjQyNDU0fQ.fu9NNXH7K5eET38bw8E7dUuDLN94hCg8KsRrzIP2uzQ
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTYzODg1NCwiZXhwIjoxNzMxNjQyNDU0fQ.fu9NNXH7K5eET38bw8E7dUuDLN94hCg8KsRrzIP2uzQ
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for POST /statuses
   /statuses/{id}:
+    get:
+      tags:
+        - statuses
+      summary: get status by id
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 2788ef36-9834-4171-b183-caf1af2840ab
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
     delete:
       tags:
         - statuses
@@ -654,10 +626,6 @@ paths:
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for DELETE /statuses/{id}
   /payments:
     post:
       tags:
@@ -669,17 +637,20 @@ paths:
             schema:
               type: object
               example:
-                shipment_id: 123e4567-e89b-12d3-a456-426614174000
+                shipment_id: ada02826-6fd3-4a69-b047-783fad0cd507
                 method: Online
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkzMTgwZDY2LTc2NDgtNDdhNi1iNWZlLTNkODVmMjEzOTQxYiIsImlhdCI6MTczMjE2OTIyOSwiZXhwIjoxNzMyMTcyODI5fQ.tQieXBj1l9sYJcn3ffGt5yjKa_v-lJbaSZpXJoPjUTE
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for POST /payments
     get:
       tags:
         - payments
@@ -689,16 +660,61 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTc0NDk2MiwiZXhwIjoxNzMxNzQ4NTYyfQ.axEXhdQ-5AV0XDynYLyryiJongIRQG2Njxh5b78oqLE
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTc0NDk2MiwiZXhwIjoxNzMxNzQ4NTYyfQ.axEXhdQ-5AV0XDynYLyryiJongIRQG2Njxh5b78oqLE
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for GET /payments
+  /payments/{id}/status:
+    patch:
+      tags:
+        - payments
+      summary: update shipment status on COD
+      requestBody:
+        content: {}
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkzMTgwZDY2LTc2NDgtNDdhNi1iNWZlLTNkODVmMjEzOTQxYiIsImlhdCI6MTczMjE1OTEzNywiZXhwIjoxNzMyMTYyNzM3fQ.OBclDN2QxzXCvYPXFtt7FBfFbis7xReBy8KrsxBKqj8
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 2234367b-7790-4ddc-a4d5-766040deadeb
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /payments/{id}:
+    get:
+      tags:
+        - payments
+      summary: get payment by id
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1OTkxMywiZXhwIjoxNzMyMTYzNTEzfQ.YS7q_SlZ0OPrzsQarVtkJRy827w9Mv3YrOiXQV85F_8
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 2234367b-7790-4ddc-a4d5-766040deadeb
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
   /reports/shipments:
     post:
       tags:
@@ -710,17 +726,30 @@ paths:
             schema:
               type: object
               example:
-                dateFrom: '2024-01-01'
-                dateTo: '2024-11-30'
+                startDate: '2024-01-01'
+                endDate: '2024-11-30'
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE2NjE1NCwiZXhwIjoxNzMyMTY5NzU0fQ.mdfr5nkgv28gb6sHHX4ryg1aWHA0RGbkRrLctpAFdEM
+        - name: startDate
+          in: query
+          schema:
+            type: string
+          example: '2024-01-01'
+        - name: endDate
+          in: query
+          schema:
+            type: string
+          example: '2025-04-01'
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for POST /reports/shipments
   /reports/customers:
     post:
       tags:
@@ -739,31 +768,10 @@ paths:
           in: header
           schema:
             type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTg1ODI5OSwiZXhwIjoxNzMxODYxODk5fQ._4qftoDlsY75khSSiWZilGh7wa2xkNbzlIGtk8_Q7hU
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTg1ODI5OSwiZXhwIjoxNzMxODYxODk5fQ._4qftoDlsY75khSSiWZilGh7wa2xkNbzlIGtk8_Q7hU
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-        '400': *id001
-        '401': *id002
-        '500': *id003
-      description: Description for POST /reports/customers
-components:
-  schemas: {}
-  responses: {}
-  parameters: {}
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-security:
-  - BearerAuth: []
-tags:
-  - name: auth
-  - name: users
-  - name: shipments
-  - name: statuses
-  - name: payments
-  - name: reports
