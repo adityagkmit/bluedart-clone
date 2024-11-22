@@ -35,7 +35,7 @@ const userSerializer = (req, res, next) => {
     total: payments.total,
     pages: payments.pages,
     currentPage: payments.currentPage,
-    data: payments.data.map(payment => ({
+    payments: payments.data.map(payment => ({
       id: payment.id,
       userId: payment.user_id,
       shipmentId: payment.shipment_id,
