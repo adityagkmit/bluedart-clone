@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "test": "jest --coverage"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

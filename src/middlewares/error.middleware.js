@@ -1,18 +1,21 @@
 const { ApiError } = require('../helpers/response.helper');
 
 // Global error handler middleware
-const errorHandler = (err, req, res) => {
+const errorHandler = (err, req, res, next) => {
   if (err instanceof ApiError) {
     const { statusCode, message, errors } = err;
     return res.status(statusCode).json({
       statusCode,
       success: false,
       message,
-      errors,
+      errors: errors.length ? errors : undefined,
     });
   }
 
-  console.error(err.stack); // Log stack trace for debugging
+  if (process.env.NODE_ENV !== 'production') {
+    console.error('Error stack:', err.stack);
+  }
+
   res.status(500).json({
     statusCode: 500,
     success: false,
