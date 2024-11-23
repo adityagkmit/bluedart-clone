@@ -36,7 +36,7 @@ router.get(
   '/',
   auth,
   checkDocumentVerified,
-  roles(['Admin', 'Delivery Agent', 'Customer']),
+  roles(['Admin']),
   shipmentController.getShipments,
   applySerializer(shipmentSerializer),
   responseHandler
