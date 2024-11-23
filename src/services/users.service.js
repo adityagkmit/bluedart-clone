@@ -4,7 +4,7 @@ const { uploadFileToS3 } = require('../helpers/aws.helper');
 const bcrypt = require('bcryptjs');
 const { ApiError } = require('../helpers/response.helper');
 
-const createUser = async ({ name, email, password, phone_number, roleName = 'Customer' }) => {
+const createUser = async ({ name, email, password, phoneNumber, roleName = 'Customer' }) => {
   const role = await Role.findOne({ where: { name: roleName } });
 
   if (!role) {
@@ -35,7 +35,7 @@ const createUser = async ({ name, email, password, phone_number, roleName = 'Cus
       name,
       email,
       password: hashedPassword,
-      phone_number,
+      phone_number: phoneNumber,
     });
 
     await user.addRole(role);

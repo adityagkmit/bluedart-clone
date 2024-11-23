@@ -1,7 +1,18 @@
 const { ApiError } = require('../helpers/response.helper');
 const authService = require('../services/auth.service');
 
-// Send OTP
+const register = async (req, res, next) => {
+  try {
+    const user = await authService.registerUser(req.body);
+    res.data = user;
+    res.message = 'User registered successfully';
+    res.statusCode = 201;
+    next();
+  } catch (error) {
+    next(new ApiError(400, error.message));
+  }
+};
+
 const sendOtp = async (req, res, next) => {
   try {
     await authService.sendOtp(req.body.email);
@@ -12,28 +23,10 @@ const sendOtp = async (req, res, next) => {
   }
 };
 
-// Verify OTP
 const verifyOtp = async (req, res, next) => {
   try {
-    const isValid = await authService.verifyOtp(req.body);
-    if (!isValid) {
-      return next(new ApiError(400, 'Invalid or expired OTP'));
-    }
-    res.data = null;
+    await authService.verifyOtp(req.body);
     res.message = 'OTP verified successfully';
-    next();
-  } catch (error) {
-    next(new ApiError(400, error.message));
-  }
-};
-
-// Register User
-const register = async (req, res, next) => {
-  try {
-    const user = await authService.registerUser(req.body);
-    res.data = user;
-    res.message = 'User registered successfully';
-    res.statusCode = 201;
     next();
   } catch (error) {
     next(new ApiError(400, error.message));
