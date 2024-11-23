@@ -12,22 +12,22 @@ const serializeAuthResponse = (req, res, next) => {
       return {
         token: data.token,
         user: {
-          id: data.user.id,
           name: data.user.name,
           email: data.user.email,
           phoneNumber: data.user.phone_number,
           documentUrl: data.user.document_url,
+          isEmailVerified: data.user.is_email_verified,
           isDocumentVerified: data.user.is_document_verified,
         },
       };
     } else if (data.id) {
       return {
-        id: data.id,
-        isDocumentVerified: data.is_document_verified,
         name: data.name,
         email: data.email,
         phoneNumber: data.phone_number,
         documentUrl: data.document_url,
+        isEmailVerified: data.is_email_verified,
+        isDocumentVerified: data.is_document_verified,
       };
     } else {
       return data; // Default pass-through

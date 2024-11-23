@@ -6,16 +6,46 @@ const bcrypt = require('bcryptjs');
 const { generateToken, blacklistToken } = require('../helpers/jwt.helper');
 const { ApiError } = require('../helpers/response.helper');
 
+const registerUser = async payload => {
+  const { email } = payload;
+
+  const existingUser = await User.findOne({ where: { email } });
+  if (existingUser) {
+    throw new ApiError(409, 'User already exists');
+  }
+
+  const user = await userService.createUser(payload);
+  return user;
+};
+
 const sendOtp = async email => {
+  const user = await User.findOne({ where: { email } });
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  if (user.is_email_verified) {
+    throw new ApiError(409, 'Email already verified');
+  }
+
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  await redisClient.setEx(email, 300, otp); // Store OTP in Redis for 1 minute
-  console.log(otp);
+  await redisClient.setEx(email, 300, otp);
+  console.log('Generated OTP:', otp);
   await sendOtpEmail(email, otp);
 
-  return { otp };
+  return true;
 };
 
 const verifyOtp = async ({ email, otp }) => {
+  const user = await User.findOne({ where: { email } });
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  if (user.is_email_verified) {
+    throw new ApiError(409, 'Email already verified');
+  }
+
   const storedOtp = await redisClient.get(email);
 
   if (!storedOtp || storedOtp !== otp) {
@@ -23,22 +53,17 @@ const verifyOtp = async ({ email, otp }) => {
   }
 
   await redisClient.del(email);
-  await redisClient.setEx(`${email}_verified`, 300, 'true');
+  user.is_email_verified = true;
+  user.save();
   return true;
-};
-
-const registerUser = async payload => {
-  const isVerified = await redisClient.get(`${payload.email}_verified`);
-
-  if (isVerified !== 'true') {
-    throw new ApiError(400, 'User not verified. Please complete OTP verification.');
-  }
-
-  return userService.createUser(payload);
 };
 
 const loginUser = async ({ email, password }) => {
   const user = await User.findOne({ where: { email } });
+
+  if (!user.is_email_verified) {
+    throw new ApiError(401, 'Email not verified');
+  }
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
     throw new ApiError(401, 'Invalid credentials');
