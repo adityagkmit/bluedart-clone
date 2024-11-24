@@ -19,7 +19,7 @@ const createUserSchema = Joi.object({
     'string.email': 'Please enter a valid email',
     'any.required': 'Email is a required field',
   }),
-  phone_number: Joi.string()
+  phoneNumber: Joi.string()
     .pattern(/^[0-9]{10}$/)
     .required()
     .messages({
@@ -42,7 +42,7 @@ const updateUserSchema = Joi.object({
   email: Joi.string().email().optional().messages({
     'string.email': 'Please enter a valid email',
   }),
-  phone_number: Joi.string()
+  phoneNumber: Joi.string()
     .pattern(/^[0-9]{10}$/)
     .optional()
     .messages({
@@ -51,6 +51,7 @@ const updateUserSchema = Joi.object({
   password: Joi.string().min(6).optional().messages({
     'string.min': 'Password must be at least 6 characters long',
   }),
+  roleName: Joi.string().valid('Customer', 'Delivery Agent').default('Customer'),
 });
 
 module.exports = {

@@ -1,4 +1,4 @@
-const { User, Role, UsersRoles, Payment, Shipment } = require('../models');
+const { User, Role, UsersRoles, Payment, Shipment, Rate, Status } = require('../models');
 const { redisClient } = require('../config/redis');
 const { uploadFileToS3 } = require('../helpers/aws.helper');
 const bcrypt = require('bcryptjs');
@@ -103,7 +103,7 @@ const getUserById = async userId => {
 };
 
 const createUserByAdmin = async userData => {
-  const { name, email, password, phone_number, roles } = userData;
+  const { name, email, password, phoneNumber, roles } = userData;
 
   const userExists = await User.findOne({ where: { email } });
   if (userExists) {
@@ -116,7 +116,7 @@ const createUserByAdmin = async userData => {
     name,
     email,
     password: hashedPassword,
-    phone_number,
+    phone_number: phoneNumber,
   });
 
   if (roles && roles.length > 0) {
@@ -139,6 +139,10 @@ const createUserByAdmin = async userData => {
 const updateUserById = async (userId, updateData) => {
   if (updateData.password) {
     updateData.password = await bcrypt.hash(updateData.password, 10);
+  }
+
+  if (updateData.phoneNumber) {
+    updateData.phone_number = updateData.phoneNumber;
   }
 
   const [rowsUpdated, [updatedUser]] = await User.update(updateData, {
@@ -173,6 +177,28 @@ const deleteUserById = async userId => {
   return true;
 };
 
+const getShipmentsByUserId = async (userId, page = 1, limit = 10) => {
+  const offset = (page - 1) * limit;
+
+  const shipments = await Shipment.findAndCountAll({
+    where: { user_id: userId },
+    include: [
+      { model: User, as: 'user', attributes: ['id', 'name', 'email'] },
+      { model: Status, as: 'statuses' },
+    ],
+    limit,
+    offset,
+    order: [['created_at', 'DESC']],
+  });
+
+  return {
+    totalItems: shipments.count,
+    totalPages: Math.ceil(shipments.count / limit),
+    currentPage: page,
+    data: shipments.rows,
+  };
+};
+
 const getPaymentsByUserId = async (userId, page = 1, limit = 10) => {
   const offset = (page - 1) * limit;
 
@@ -185,8 +211,8 @@ const getPaymentsByUserId = async (userId, page = 1, limit = 10) => {
   });
 
   return {
-    total: payments.count,
-    pages: Math.ceil(payments.count / limit),
+    totalItems: payments.count,
+    totalPages: Math.ceil(payments.count / limit),
     currentPage: page,
     data: payments.rows,
   };
@@ -216,6 +242,10 @@ const verifyUserDocument = async userId => {
     throw new ApiError(400, 'User document not found');
   }
 
+  if (user.is_document_verified) {
+    throw new ApiError(409, 'User document already verified');
+  }
+
   user.is_document_verified = true;
   await user.save();
   return user;
@@ -228,6 +258,7 @@ module.exports = {
   createUserByAdmin,
   updateUserById,
   deleteUserById,
+  getShipmentsByUserId,
   getPaymentsByUserId,
   uploadDocument,
   verifyUserDocument,
