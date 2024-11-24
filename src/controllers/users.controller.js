@@ -84,12 +84,27 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
+// Get User Shipments
+const getUserShipments = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    const shipments = await userService.getShipmentsByUserId(id, Number(page), Number(limit));
+    res.data = shipments;
+    res.message = 'User Shipments retrieved successfully';
+    next();
+  } catch (error) {
+    next(new ApiError(400, error.message));
+  }
+};
+
 // Get User Payments
 const getUserPayments = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { page, limit } = req.query;
-    const payments = await userService.getPaymentsByUserId(id, page, limit);
+    const { page = 1, limit = 10 } = req.query;
+    const payments = await userService.getPaymentsByUserId(id, Number(page), Number(limit));
     res.data = payments;
     res.message = 'User payments retrieved successfully';
     next();
@@ -119,7 +134,7 @@ const verifyDocument = async (req, res, next) => {
   try {
     const { id } = req.params;
     const user = await userService.verifyUserDocument(id);
-    res.data = user;
+    // res.data = user;
     res.message = 'Document verified successfully';
     next();
   } catch (error) {
@@ -134,6 +149,7 @@ module.exports = {
   createUser,
   updateUser,
   deleteUser,
+  getUserShipments,
   getUserPayments,
   uploadDocument,
   verifyDocument,

@@ -64,9 +64,20 @@ router.delete(
 );
 
 router.get(
+  '/:id/shipments',
+  auth,
+  roles(['Admin', 'Customer'], true),
+  validate(userIdValidateSchema, true),
+  validate(paginationSchema, false, true),
+  userController.getUserShipments,
+  applySerializer(userSerializer),
+  responseHandler
+);
+
+router.get(
   '/:id/payments',
   auth,
-  roles(['Admin'], true),
+  roles(['Admin', 'Customer'], true),
   validate(userIdValidateSchema, true),
   validate(paginationSchema, false, true),
   userController.getUserPayments,
