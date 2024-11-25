@@ -3,6 +3,7 @@ const { Shipment, Rate, User, Status, Role } = require('../models');
 const { Op } = require('sequelize');
 const { sendEmail } = require('../helpers/email.helper');
 const { ApiError } = require('../helpers/response.helper');
+const statusService = require('./statuses.service');
 
 const createShipment = async (data, userId) => {
   const city = await extractCityFromAddress(data.deliveryAddress);
@@ -169,14 +170,24 @@ const deleteShipment = async (shipmentId, user) => {
   return true;
 };
 
-const updateShipmentStatus = async (shipmentId, status) => {
-  const shipment = await Shipment.findByPk(shipmentId);
+const updateShipmentStatus = async (data, user, transaction = null) => {
+  const shipment = await Shipment.findByPk(data.shipmentId, { transaction });
   if (!shipment) {
-    throw new ApiError(404, `No shipment found with ID ${shipmentId}`);
+    throw new ApiError(404, `No shipment found with ID ${data.shipmentId}`);
   }
 
-  shipment.status = status;
-  await shipment.save();
+  shipment.status = data.status;
+  await shipment.save({ transaction });
+
+  await statusService.createStatus(
+    {
+      name: data.status,
+      shipmentId: data.shipmentId,
+    },
+    user,
+    transaction
+  );
+
   return shipment;
 };
 
