@@ -133,8 +133,7 @@ const uploadDocument = async (req, res, next) => {
 const verifyDocument = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const user = await userService.verifyUserDocument(id);
-    // res.data = user;
+    await userService.verifyUserDocument(id);
     res.message = 'Document verified successfully';
     next();
   } catch (error) {
