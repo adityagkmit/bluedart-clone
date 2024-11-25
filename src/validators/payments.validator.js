@@ -1,7 +1,7 @@
 const Joi = require('joi');
 
 const createPaymentSchema = Joi.object({
-  shipment_id: Joi.string().uuid().required().messages({
+  shipmentId: Joi.string().uuid().required().messages({
     'any.required': 'Shipment ID is required',
     'string.uuid': 'Shipment ID must be a valid UUID',
   }),

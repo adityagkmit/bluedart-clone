@@ -23,7 +23,7 @@ router.post(
 );
 
 router.patch(
-  '/:id/status',
+  '/:id',
   auth,
   checkDocumentVerified,
   roles(['Delivery Agent']),
