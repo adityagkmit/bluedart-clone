@@ -18,6 +18,7 @@ function getCityTier(city) {
 }
 
 function calculatePrice(rate, shipmentData) {
+  console.log(shipmentData);
   const { weight, dimensions, is_fragile, delivery_option } = shipmentData;
 
   const deliveryOptionMultiplier = delivery_option === 'Express' ? rate.delivery_option_multiplier : 1; // No multiplier for standard delivery

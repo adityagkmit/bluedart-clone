@@ -4,9 +4,8 @@ const { Op } = require('sequelize');
 const { sendEmail } = require('../helpers/email.helper');
 const { ApiError } = require('../helpers/response.helper');
 
-const createShipment = async (shipmentData, userId) => {
-  const { delivery_address } = shipmentData;
-  const city = await extractCityFromAddress(delivery_address);
+const createShipment = async (data, userId) => {
+  const city = await extractCityFromAddress(data.deliveryAddress);
   const cityTier = getCityTier(city);
 
   const rate = await Rate.findOne({ where: { city_tier: cityTier } });
@@ -14,11 +13,24 @@ const createShipment = async (shipmentData, userId) => {
     throw new ApiError(404, `No rate found for city tier ${cityTier}`);
   }
 
+  const calculatePriceData = {
+    weight: data.weight,
+    dimensions: data.dimensions,
+    is_fragile: data.isFragile,
+    delivery_option: data.deliveryOption,
+  };
+
   const shipment = await Shipment.create({
     user_id: userId,
     rate_id: rate.id,
-    price: calculatePrice(rate, shipmentData),
-    ...shipmentData,
+    pickup_address: data.pickupAddress,
+    delivery_address: data.deliveryAddress,
+    is_fragile: data.isFragile,
+    delivery_option: data.deliveryOption,
+    preferred_delivery_date: data.preferredDeliveryDate,
+    preferred_delivery_time: data.preferredDeliveryTime,
+    price: calculatePrice(rate, calculatePriceData),
+    ...data,
   });
 
   return shipment;
@@ -89,8 +101,8 @@ const updateShipment = async (shipmentId, data) => {
     throw new ApiError(404, `No shipment found with ID ${shipmentId}`);
   }
 
-  if (data.delivery_address || data.weight || data.dimensions || data.is_fragile || data.delivery_option) {
-    const deliveryAddress = data.delivery_address || shipment.delivery_address;
+  if (data.deliveryAddress || data.weight || data.dimensions || data.isFragile || data.deliveryOption) {
+    const deliveryAddress = data.deliveryAddress || shipment.delivery_address;
     const city = await extractCityFromAddress(deliveryAddress);
     const cityTier = getCityTier(city);
 
@@ -99,16 +111,39 @@ const updateShipment = async (shipmentId, data) => {
       throw new ApiError(404, `No rate found for city tier ${cityTier}`);
     }
 
-    const updatedPrice = calculatePrice(rate, {
-      ...shipment.toJSON(),
-      ...data,
-    });
+    const calculatePriceData = {
+      weight: data.weight || shipment.weight,
+      dimensions: data.dimensions || shipment.dimensions,
+      is_fragile: data.isFragile || shipment.is_fragile,
+      delivery_option: data.deliveryOption || shipment.delivery_option,
+    };
 
-    data.rate_id = rate.id;
+    const updatedPrice = calculatePrice(rate, calculatePriceData);
+
+    data.rateId = rate.id;
     data.price = updatedPrice;
   }
 
-  const [updatedRowCount, updatedShipment] = await Shipment.update(data, {
+  // Map camelCase to snake_case
+  const updateData = {
+    pickup_address: data.pickupAddress,
+    delivery_address: data.deliveryAddress,
+    weight: data.weight,
+    dimensions: data.dimensions,
+    is_fragile: data.isFragile,
+    delivery_option: data.deliveryOption,
+    preferred_delivery_date: data.preferredDeliveryDate,
+    preferred_delivery_time: data.preferredDeliveryTime,
+    rate_id: data.rateId,
+    price: data.price,
+  };
+
+  // Remove undefined fields
+  Object.keys(updateData).forEach(key => {
+    if (updateData[key] === undefined) delete updateData[key];
+  });
+
+  const [updatedRowCount, updatedShipment] = await Shipment.update(updateData, {
     where: { id: shipmentId },
     returning: true,
   });
@@ -171,6 +206,24 @@ const assignDeliveryAgent = async (shipmentId, deliveryAgentId) => {
   return updatedShipments[0];
 };
 
+const rescheduleShipment = async (shipmentId, data) => {
+  const shipment = await Shipment.findByPk(shipmentId);
+
+  if (!shipment) {
+    throw new ApiError(404, `No shipment found with ID ${shipmentId}`);
+  }
+
+  if (shipment.user_id !== data.userId && !data.userRoles.includes('Admin')) {
+    throw new ApiError(403, 'Access denied. User is not the owner of the shipment.');
+  }
+
+  shipment.preferred_delivery_date = data.preferredDeliveryDate;
+  shipment.preferred_delivery_time = data.preferredDeliveryTime;
+
+  await shipment.save();
+  return shipment;
+};
+
 const sendShipmentReminders = async () => {
   const shipments = await Shipment.findAll({
     where: {
@@ -209,24 +262,6 @@ const sendShipmentReminders = async () => {
 
   await Promise.all(promises);
   console.log('All shipment reminders processed.');
-};
-
-const rescheduleShipment = async (shipmentId, data) => {
-  const shipment = await Shipment.findByPk(shipmentId);
-
-  if (!shipment) {
-    throw new ApiError(404, `No shipment found with ID ${shipmentId}`);
-  }
-
-  if (shipment.user_id !== data.userId && !data.userRoles.includes('Admin')) {
-    throw new ApiError(403, 'Access denied. User is not the owner of the shipment.');
-  }
-
-  shipment.preferred_delivery_date = data.preferred_delivery_date;
-  shipment.preferred_delivery_time = data.preferred_delivery_time;
-
-  await shipment.save();
-  return shipment;
 };
 
 module.exports = {
