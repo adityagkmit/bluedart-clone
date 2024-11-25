@@ -5,6 +5,7 @@ const { auth } = require('../middlewares/auth.middleware');
 const roles = require('../middlewares/role.middleware');
 const validate = require('../middlewares/validator.middleware');
 const { userIdValidateSchema, createUserSchema, updateUserSchema } = require('../validators/users.validator');
+const { ADMIN, CUSTOMER, DELIVERYAGENT } = require('../constants/roles');
 const paginationSchema = require('../validators/pagination.validator');
 const upload = require('../middlewares/multer.middleware');
 const { userSerializer } = require('../serializers/users.serializer');
@@ -16,7 +17,7 @@ router.get('/me', auth, userController.getCurrentUser, applySerializer(userSeria
 router.get(
   '/',
   auth,
-  roles('Admin'),
+  roles([ADMIN]),
   validate(paginationSchema, false, true),
   userController.getAllUsers,
   applySerializer(userSerializer),
@@ -26,7 +27,7 @@ router.get(
 router.post(
   '/',
   auth,
-  roles('Admin'),
+  roles([ADMIN]),
   validate(createUserSchema),
   userController.createUser,
   applySerializer(userSerializer),
@@ -45,7 +46,7 @@ router.get(
 router.put(
   '/:id',
   auth,
-  roles(['Admin'], true),
+  roles([ADMIN], true),
   validate(updateUserSchema),
   validate(userIdValidateSchema, true),
   userController.updateUser,
@@ -56,7 +57,7 @@ router.put(
 router.delete(
   '/:id',
   auth,
-  roles(['Admin'], true),
+  roles([ADMIN], true),
   validate(userIdValidateSchema, true),
   userController.deleteUser,
   applySerializer(userSerializer),
@@ -66,7 +67,7 @@ router.delete(
 router.get(
   '/:id/shipments',
   auth,
-  roles(['Admin', 'Customer'], true),
+  roles([ADMIN, CUSTOMER], true),
   validate(userIdValidateSchema, true),
   validate(paginationSchema, false, true),
   userController.getUserShipments,
@@ -77,7 +78,7 @@ router.get(
 router.get(
   '/:id/payments',
   auth,
-  roles(['Admin', 'Customer'], true),
+  roles([ADMIN, CUSTOMER], true),
   validate(userIdValidateSchema, true),
   validate(paginationSchema, false, true),
   userController.getUserPayments,
@@ -88,7 +89,7 @@ router.get(
 router.post(
   '/upload-document',
   auth,
-  roles(['Customer', 'Delivery Agent']),
+  roles([CUSTOMER, DELIVERYAGENT]),
   upload.single('document'),
   userController.uploadDocument,
   applySerializer(userSerializer),
@@ -96,9 +97,9 @@ router.post(
 );
 
 router.patch(
-  '/:id/verify-document',
+  '/:id',
   auth,
-  roles(['Admin']),
+  roles([ADMIN]),
   validate(userIdValidateSchema, true),
   userController.verifyDocument,
   applySerializer(userSerializer),
