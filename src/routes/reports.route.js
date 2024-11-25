@@ -2,7 +2,7 @@ const express = require('express');
 const { auth } = require('../middlewares/auth.middleware');
 const roles = require('../middlewares/role.middleware');
 const validate = require('../middlewares/validator.middleware');
-const checkDocumentVerified = require('../middlewares/document.middleware');
+const checkDocumentVerification = require('../middlewares/document.middleware');
 const reportController = require('../controllers/reports.controller');
 const { shipmentReportSchema, customerReportSchema } = require('../validators/reports.validator');
 const { ADMIN, CUSTOMER } = require('../constants/roles');
@@ -27,7 +27,7 @@ router.post(
 router.post(
   '/customers',
   auth,
-  checkDocumentVerified,
+  checkDocumentVerification,
   roles([CUSTOMER]),
   validate(customerReportSchema),
   reportController.generateCustomerReport,

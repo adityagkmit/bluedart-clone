@@ -1,6 +1,6 @@
 const { ApiError } = require('../helpers/response.helper');
 
-const checkDocumentVerified = (req, res, next) => {
+const checkDocumentVerification = (req, res, next) => {
   if (!req.user) {
     return ApiError.handleError(new ApiError(401, 'Unauthorized'), res);
   }
@@ -15,4 +15,4 @@ const checkDocumentVerified = (req, res, next) => {
   next();
 };
 
-module.exports = checkDocumentVerified;
+module.exports = checkDocumentVerification;

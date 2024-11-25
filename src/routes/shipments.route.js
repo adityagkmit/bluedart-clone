@@ -4,7 +4,7 @@ const shipmentController = require('../controllers/shipments.controller');
 const validate = require('../middlewares/validator.middleware');
 const { auth } = require('../middlewares/auth.middleware');
 const roles = require('../middlewares/role.middleware');
-const checkDocumentVerified = require('../middlewares/document.middleware');
+const checkDocumentVerification = require('../middlewares/document.middleware');
 const applySerializer = require('../middlewares/serializer.middleware');
 const { shipmentSerializer } = require('../serializers/shipments.serializer');
 const { ADMIN, CUSTOMER, DELIVERYAGENT } = require('../constants/roles');
@@ -22,7 +22,7 @@ const router = express.Router();
 router.post(
   '/',
   auth,
-  checkDocumentVerified,
+  checkDocumentVerification,
   roles([CUSTOMER]),
   validate(createShipmentSchema),
   shipmentController.createShipment,
@@ -34,7 +34,7 @@ router.post(
 router.get(
   '/',
   auth,
-  checkDocumentVerified,
+  checkDocumentVerification,
   roles([ADMIN]),
   shipmentController.getShipments,
   applySerializer(shipmentSerializer),
@@ -45,7 +45,7 @@ router.get(
 router.get(
   '/:id',
   auth,
-  checkDocumentVerified,
+  checkDocumentVerification,
   roles([ADMIN, DELIVERYAGENT, CUSTOMER]),
   validate(shipmentIdValidateSchema, true),
   shipmentController.getShipmentById,
@@ -57,7 +57,7 @@ router.get(
 router.get(
   '/:id/statuses',
   auth,
-  checkDocumentVerified,
+  checkDocumentVerification,
   roles([ADMIN, DELIVERYAGENT, CUSTOMER]),
   validate(shipmentIdValidateSchema, true),
   shipmentController.getShipmentStatuses,
@@ -69,7 +69,7 @@ router.get(
 router.put(
   '/:id',
   auth,
-  checkDocumentVerified,
+  checkDocumentVerification,
   roles([ADMIN, CUSTOMER]),
   validate(shipmentIdValidateSchema, true),
   validate(updateShipmentSchema),
@@ -82,7 +82,7 @@ router.put(
 router.delete(
   '/:id',
   auth,
-  checkDocumentVerified,
+  checkDocumentVerification,
   roles([ADMIN, CUSTOMER], true),
   validate(shipmentIdValidateSchema, true),
   shipmentController.deleteShipment,
@@ -94,7 +94,7 @@ router.delete(
 router.patch(
   '/:id',
   auth,
-  checkDocumentVerified,
+  checkDocumentVerification,
   validate(shipmentIdValidateSchema, true),
   validate(unifiedShipmentSchema),
   shipmentController.updateShipmentThroughAction,

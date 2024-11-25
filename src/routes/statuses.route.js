@@ -5,7 +5,7 @@ const { statusIdValidateSchema } = require('../validators/statuses.validator');
 const { auth } = require('../middlewares/auth.middleware');
 const { ADMIN, CUSTOMER, DELIVERYAGENT } = require('../constants/roles');
 const roles = require('../middlewares/role.middleware');
-const checkDocumentVerified = require('../middlewares/document.middleware');
+const checkDocumentVerification = require('../middlewares/document.middleware');
 const responseHandler = require('../middlewares/response.middleware');
 const statusesSerializer = require('../serializers/statuses.serializer');
 const applySerializer = require('../middlewares/serializer.middleware');
@@ -15,7 +15,7 @@ const router = express.Router();
 router.get(
   '/:id',
   auth,
-  checkDocumentVerified,
+  checkDocumentVerification,
   roles([ADMIN, DELIVERYAGENT, CUSTOMER]),
   validate(statusIdValidateSchema, true),
   statusController.getStatusById,
