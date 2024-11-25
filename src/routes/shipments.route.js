@@ -7,6 +7,7 @@ const roles = require('../middlewares/role.middleware');
 const checkDocumentVerified = require('../middlewares/document.middleware');
 const applySerializer = require('../middlewares/serializer.middleware');
 const { shipmentSerializer } = require('../serializers/shipments.serializer');
+const { ADMIN, CUSTOMER, DELIVERYAGENT } = require('../constants/roles');
 const responseHandler = require('../middlewares/response.middleware');
 const {
   createShipmentSchema,
@@ -22,7 +23,7 @@ router.post(
   '/',
   auth,
   checkDocumentVerified,
-  roles(['Customer']),
+  roles([CUSTOMER]),
   validate(createShipmentSchema),
   shipmentController.createShipment,
   applySerializer(shipmentSerializer),
@@ -34,7 +35,7 @@ router.get(
   '/',
   auth,
   checkDocumentVerified,
-  roles(['Admin']),
+  roles([ADMIN]),
   shipmentController.getShipments,
   applySerializer(shipmentSerializer),
   responseHandler
@@ -45,7 +46,7 @@ router.get(
   '/:id',
   auth,
   checkDocumentVerified,
-  roles(['Customer', 'Delivery Agent', 'Admin']),
+  roles([ADMIN, DELIVERYAGENT, CUSTOMER]),
   validate(shipmentIdValidateSchema, true),
   shipmentController.getShipmentById,
   applySerializer(shipmentSerializer),
@@ -57,7 +58,7 @@ router.get(
   '/:id/statuses',
   auth,
   checkDocumentVerified,
-  roles(['Admin', 'Delivery Agent', 'Customer']),
+  roles([ADMIN, DELIVERYAGENT, CUSTOMER]),
   validate(shipmentIdValidateSchema, true),
   shipmentController.getShipmentStatuses,
   applySerializer(shipmentSerializer),
@@ -69,7 +70,7 @@ router.put(
   '/:id',
   auth,
   checkDocumentVerified,
-  roles(['Admin', 'Customer']),
+  roles([ADMIN, CUSTOMER]),
   validate(shipmentIdValidateSchema, true),
   validate(updateShipmentSchema),
   shipmentController.updateShipment,
@@ -82,7 +83,7 @@ router.delete(
   '/:id',
   auth,
   checkDocumentVerified,
-  roles(['Admin', 'Customer'], true),
+  roles([ADMIN, CUSTOMER], true),
   validate(shipmentIdValidateSchema, true),
   shipmentController.deleteShipment,
   applySerializer(shipmentSerializer),
