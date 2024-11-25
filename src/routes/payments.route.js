@@ -5,7 +5,7 @@ const { createPaymentSchema, paymentIdValidateSchema } = require('../validators/
 const { auth } = require('../middlewares/auth.middleware');
 const { ADMIN, CUSTOMER, DELIVERYAGENT } = require('../constants/roles');
 const roles = require('../middlewares/role.middleware');
-const checkDocumentVerified = require('../middlewares/document.middleware');
+const checkDocumentVerification = require('../middlewares/document.middleware');
 const responseHandler = require('../middlewares/response.middleware');
 const paymentsSerializer = require('../serializers/payments.serializer');
 const applySerializer = require('../middlewares/serializer.middleware');
@@ -15,7 +15,7 @@ const router = express.Router();
 router.post(
   '/',
   auth,
-  checkDocumentVerified,
+  checkDocumentVerification,
   roles([CUSTOMER]),
   validate(createPaymentSchema),
   paymentController.createPayment,
@@ -26,7 +26,7 @@ router.post(
 router.patch(
   '/:id',
   auth,
-  checkDocumentVerified,
+  checkDocumentVerification,
   roles([DELIVERYAGENT]),
   validate(paymentIdValidateSchema, true),
   paymentController.completeCODPayment,
@@ -37,7 +37,7 @@ router.patch(
 router.get(
   '/:id',
   auth,
-  checkDocumentVerified,
+  checkDocumentVerification,
   roles([ADMIN, CUSTOMER, DELIVERYAGENT]),
   validate(paymentIdValidateSchema, true),
   paymentController.getPaymentById,
@@ -48,7 +48,7 @@ router.get(
 router.get(
   '/',
   auth,
-  checkDocumentVerified,
+  checkDocumentVerification,
   roles([ADMIN, CUSTOMER]),
   paymentController.getPayments,
   applySerializer(paymentsSerializer),
