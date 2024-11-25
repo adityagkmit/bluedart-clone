@@ -88,7 +88,7 @@ const deleteShipment = async (req, res, next) => {
 // Update Shipment by actions
 const updateShipmentThroughAction = async (req, res, next) => {
   try {
-    const { action, data } = req.body;
+    const { action, deliveryAgentId, status, preferredDeliveryDate, preferredDeliveryTime } = req.body;
     const { id } = req.params;
     const userId = req.user.id;
     const userRoles = req.user.Roles.map(role => role.name);
@@ -100,7 +100,13 @@ const updateShipmentThroughAction = async (req, res, next) => {
         if (!userRoles.includes('Admin') && !userRoles.includes('Delivery Agent')) {
           throw new ApiError(403, 'You do not have permission to update the status');
         }
-        updatedShipment = await shipmentService.updateShipmentStatus(id, data.status);
+        updatedShipment = await shipmentService.updateShipmentStatus(
+          {
+            shipmentId: id,
+            status: status,
+          },
+          req.user
+        );
         res.message = 'Shipment status updated successfully';
         break;
 
@@ -108,17 +114,17 @@ const updateShipmentThroughAction = async (req, res, next) => {
         if (!userRoles.includes('Admin')) {
           throw new ApiError(403, 'Only Admins can assign delivery agents');
         }
-        updatedShipment = await shipmentService.assignDeliveryAgent(id, data.deliveryAgentId);
+        updatedShipment = await shipmentService.assignDeliveryAgent(id, deliveryAgentId);
         res.message = 'Delivery agent assigned successfully';
         break;
 
       case 'reschedule':
-        if (!userRoles.includes('Admin') && userId !== data.userId) {
+        if (!userRoles.includes('Admin')) {
           throw new ApiError(403, 'You are not authorized to reschedule this shipment');
         }
         updatedShipment = await shipmentService.rescheduleShipment(id, {
-          preferredDeliveryDate: data.preferredDeliveryDate,
-          preferredDeliveryTime: data.preferredDeliveryTime,
+          preferredDeliveryDate: preferredDeliveryDate,
+          preferredDeliveryTime: preferredDeliveryTime,
           userId,
           userRoles,
         });

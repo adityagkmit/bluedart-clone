@@ -36,28 +36,10 @@ const updateShipmentSchema = Joi.object({
 
 const unifiedShipmentSchema = Joi.object({
   action: Joi.string().valid('updateStatus', 'assignAgent', 'reschedule').required(),
-  data: Joi.alternatives()
-    .conditional('action', {
-      is: 'updateStatus',
-      then: Joi.object({
-        status: Joi.string().valid('Pending', 'In Transit', 'Out for Delivery', 'Delivered').required(),
-      }),
-    })
-    .conditional('action', {
-      is: 'assignAgent',
-      then: Joi.object({
-        deliveryAgentId: Joi.string().uuid().required(),
-      }),
-    })
-    .conditional('action', {
-      is: 'reschedule',
-      then: Joi.object({
-        preferredDeliveryDate: Joi.date().required(),
-        preferredDeliveryTime: Joi.string()
-          .regex(/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/)
-          .required(),
-      }),
-    }),
+  preferredDeliveryDate: Joi.date(),
+  preferredDeliveryTime: Joi.string().regex(/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/),
+  deliveryAgentId: Joi.string().uuid(),
+  status: Joi.string().valid('Pending', 'In Transit', 'Out for Delivery', 'Delivered'),
 });
 
 module.exports = {

@@ -1,5 +1,5 @@
 const { Payment, Shipment, sequelize } = require('../models');
-const statusService = require('./statuses.service');
+const shipmentService = require('./shipments.service');
 const ApiError = require('../helpers/response.helper').ApiError;
 const { sendPaymentConfirmationEmail } = require('../helpers/email.helper');
 const { Op } = require('sequelize');
@@ -8,13 +8,13 @@ const createPayment = async (paymentData, user) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const shipment = await Shipment.findByPk(paymentData.shipment_id, { transaction });
+    const shipment = await Shipment.findByPk(paymentData.shipmentId, { transaction });
     if (!shipment || shipment.user_id !== user.id) {
       throw new ApiError(403, 'Unauthorized to create payment for this shipment');
     }
 
     const existingPayment = await Payment.findOne({
-      where: { shipment_id: paymentData.shipment_id },
+      where: { shipment_id: paymentData.shipmentId },
       transaction,
     });
     if (existingPayment) {
@@ -23,7 +23,7 @@ const createPayment = async (paymentData, user) => {
 
     const payment = await Payment.create(
       {
-        shipment_id: paymentData.shipment_id,
+        shipment_id: paymentData.shipmentId,
         user_id: user.id,
         amount: shipment.price,
         method: paymentData.method || 'Online',
@@ -33,8 +33,11 @@ const createPayment = async (paymentData, user) => {
     );
 
     if (payment.method === 'COD') {
-      await statusService.createStatus(
-        { shipment_id: paymentData.shipment_id, name: 'In Transit' },
+      await shipmentService.updateShipmentStatus(
+        {
+          shipmentId: paymentData.shipmentId,
+          status: 'In Transit',
+        },
         user,
         transaction
       );
@@ -49,12 +52,14 @@ const createPayment = async (paymentData, user) => {
       payment.status = 'Completed';
       await payment.save({ transaction });
 
-      await statusService.createStatus(
-        { shipment_id: paymentData.shipment_id, name: 'In Transit' },
+      await shipmentService.updateShipmentStatus(
+        {
+          shipmentId: paymentData.shipmentId,
+          status: 'In Transit',
+        },
         user,
         transaction
       );
-
       await sendPaymentConfirmationEmail(user.email, {
         userName: user.name,
         shipmentId: shipment.id,
@@ -106,8 +111,11 @@ const completeCODPayment = async (paymentId, user) => {
     payment.status = 'Completed';
     await payment.save({ transaction });
 
-    await statusService.createStatus(
-      { shipment_id: payment.shipment_id, name: 'Delivered' },
+    await shipmentService.updateShipmentStatus(
+      {
+        shipmentId: payment.shipment_id,
+        status: 'Delivered',
+      },
       user,
       transaction
     );
