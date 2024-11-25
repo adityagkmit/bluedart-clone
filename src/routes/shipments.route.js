@@ -12,9 +12,7 @@ const {
   createShipmentSchema,
   shipmentIdValidateSchema,
   updateShipmentSchema,
-  updateShipmentStatusSchema,
-  assignAgentSchema,
-  shipmentRescheduleSchema,
+  unifiedShipmentSchema,
 } = require('../validators/shipments.validator');
 
 const router = express.Router();
@@ -91,39 +89,14 @@ router.delete(
   responseHandler
 );
 
-// Update Shipment Status
+// Update Shipment By Action
 router.patch(
-  '/:id/status',
+  '/:id',
   auth,
   checkDocumentVerified,
-  roles(['Admin', 'Delivery Agent']),
   validate(shipmentIdValidateSchema, true),
-  validate(updateShipmentStatusSchema),
-  shipmentController.updateShipmentStatus,
-  applySerializer(shipmentSerializer),
-  responseHandler
-);
-
-// Assign Delivery Agent to Shipment
-router.patch(
-  '/:id/assign-agent',
-  auth,
-  roles(['Admin']),
-  validate(shipmentIdValidateSchema, true),
-  validate(assignAgentSchema),
-  shipmentController.assignDeliveryAgent,
-  applySerializer(shipmentSerializer),
-  responseHandler
-);
-
-// Reschedule Shipment
-router.patch(
-  '/:id/reschedule',
-  auth,
-  checkDocumentVerified,
-  roles(['Customer', 'Admin']),
-  validate(shipmentRescheduleSchema),
-  shipmentController.rescheduleShipment,
+  validate(unifiedShipmentSchema),
+  shipmentController.updateShipmentThroughAction,
   applySerializer(shipmentSerializer),
   responseHandler
 );

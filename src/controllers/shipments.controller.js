@@ -85,59 +85,55 @@ const deleteShipment = async (req, res, next) => {
   }
 };
 
-// Update Shipment Status
-const updateShipmentStatus = async (req, res, next) => {
+// Update Shipment by actions
+const updateShipmentThroughAction = async (req, res, next) => {
   try {
-    const updatedShipment = await shipmentService.updateShipmentStatus(req.params.id, req.body.status);
-    if (!updatedShipment) {
-      return next(new ApiError(404, 'Shipment not found'));
-    }
-    res.data = updatedShipment;
-    res.message = 'Shipment status updated successfully';
-    next();
-  } catch (error) {
-    next(new ApiError(400, error.message));
-  }
-};
-
-// Assign Delivery Agent
-const assignDeliveryAgent = async (req, res, next) => {
-  try {
+    const { action, data } = req.body;
     const { id } = req.params;
-    const { delivery_agent_id } = req.body;
-    const updatedShipment = await shipmentService.assignDeliveryAgent(id, delivery_agent_id);
-    if (!updatedShipment) {
-      return next(new ApiError(404, 'Shipment not found or could not be updated'));
-    }
-    res.data = updatedShipment;
-    res.message = 'Delivery agent assigned successfully';
-    next();
-  } catch (error) {
-    next(new ApiError(400, error.message));
-  }
-};
-
-// Reschedule Shipment
-const rescheduleShipment = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { preferred_delivery_date, preferred_delivery_time } = req.body;
     const userId = req.user.id;
     const userRoles = req.user.Roles.map(role => role.name);
 
-    const updatedShipment = await shipmentService.rescheduleShipment(id, {
-      preferred_delivery_date,
-      preferred_delivery_time,
-      userId,
-      userRoles,
-    });
+    let updatedShipment;
+
+    switch (action) {
+      case 'updateStatus':
+        if (!userRoles.includes('Admin') && !userRoles.includes('Delivery Agent')) {
+          throw new ApiError(403, 'You do not have permission to update the status');
+        }
+        updatedShipment = await shipmentService.updateShipmentStatus(id, data.status);
+        res.message = 'Shipment status updated successfully';
+        break;
+
+      case 'assignAgent':
+        if (!userRoles.includes('Admin')) {
+          throw new ApiError(403, 'Only Admins can assign delivery agents');
+        }
+        updatedShipment = await shipmentService.assignDeliveryAgent(id, data.deliveryAgentId);
+        res.message = 'Delivery agent assigned successfully';
+        break;
+
+      case 'reschedule':
+        if (!userRoles.includes('Admin') && userId !== data.userId) {
+          throw new ApiError(403, 'You are not authorized to reschedule this shipment');
+        }
+        updatedShipment = await shipmentService.rescheduleShipment(id, {
+          preferredDeliveryDate: data.preferredDeliveryDate,
+          preferredDeliveryTime: data.preferredDeliveryTime,
+          userId,
+          userRoles,
+        });
+        res.message = 'Shipment rescheduled successfully';
+        break;
+
+      default:
+        throw new ApiError(400, 'Invalid action');
+    }
 
     if (!updatedShipment) {
-      return next(new ApiError(404, 'Shipment not found or cannot be rescheduled'));
+      throw new ApiError(404, 'Shipment not found or could not be updated');
     }
 
     res.data = updatedShipment;
-    res.message = 'Delivery rescheduled successfully';
     next();
   } catch (error) {
     next(new ApiError(400, error.message));
@@ -151,7 +147,5 @@ module.exports = {
   getShipmentStatuses,
   updateShipment,
   deleteShipment,
-  updateShipmentStatus,
-  assignDeliveryAgent,
-  rescheduleShipment,
+  updateShipmentThroughAction,
 };
