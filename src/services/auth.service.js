@@ -1,6 +1,6 @@
 const { redisClient } = require('../config/redis');
 const { sendOtpEmail } = require('../helpers/email.helper');
-const { User } = require('../models');
+const { User, Role } = require('../models');
 const userService = require('./users.service');
 const bcrypt = require('bcryptjs');
 const { generateToken, blacklistToken } = require('../helpers/jwt.helper');
@@ -59,7 +59,14 @@ const verifyOtp = async ({ email, otp }) => {
 };
 
 const loginUser = async ({ email, password }) => {
-  const user = await User.findOne({ where: { email } });
+  const user = await User.findOne({
+    where: { email },
+    include: {
+      model: Role,
+      through: { attributes: [] },
+      attributes: ['name'],
+    },
+  });
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
     throw new ApiError(401, 'Invalid credentials');
@@ -69,8 +76,22 @@ const loginUser = async ({ email, password }) => {
     throw new ApiError(401, 'Email not verified');
   }
 
+  const roles = user.Roles.map(role => role.name);
+
   const token = generateToken(user.id);
-  return { user, token };
+
+  return {
+    user: {
+      name: user.name,
+      email: user.email,
+      phoneNumber: user.phone_number,
+      documentUrl: user.document_url,
+      isEmailVerified: user.is_email_verified,
+      isDocumentVerified: user.is_document_verified,
+      roles,
+    },
+    token,
+  };
 };
 
 const logout = async token => {
