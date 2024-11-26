@@ -3,11 +3,7 @@ const { ApiError } = require('../helpers/response.helper');
 
 const getStatusById = async (req, res, next) => {
   try {
-    const userId = req.user.id;
-    const userRoles = req.user.Roles.map(role => role.name);
-    const statusId = req.params.id;
-
-    const status = await statusService.getStatusById(statusId, userId, userRoles);
+    const status = await statusService.getStatusById(req.params, req.user);
     if (!status) {
       return next(new ApiError(404, 'Status not found'));
     }

@@ -35,7 +35,10 @@ const createStatus = async (data, user, transaction = null) => {
   return status;
 };
 
-const getStatusById = async (statusId, userId, userRoles) => {
+const getStatusById = async (data, user) => {
+  const { id: userId, roles: userRoles } = user;
+  const statusId = data.id;
+
   const status = await Status.findByPk(statusId, {
     include: [
       {
