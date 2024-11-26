@@ -26,6 +26,7 @@ const createPayment = async (paymentData, user) => {
         shipment_id: paymentData.shipmentId,
         user_id: user.id,
         amount: shipment.price,
+        transaction_details: paymentData.transactionDetails,
         method: paymentData.method || 'Online',
         status: 'Pending',
       },
