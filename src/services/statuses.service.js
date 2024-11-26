@@ -35,8 +35,37 @@ const createStatus = async (data, user, transaction = null) => {
   return status;
 };
 
-const getStatusById = async id => {
-  return await Status.findByPk(id);
+const getStatusById = async (statusId, userId, userRoles) => {
+  const status = await Status.findByPk(statusId, {
+    include: [
+      {
+        model: Shipment,
+        attributes: ['id', 'user_id', 'delivery_agent_id'],
+      },
+    ],
+  });
+
+  if (!status) {
+    throw new ApiError(404, 'Status not found');
+  }
+
+  const shipment = status.Shipment;
+
+  if (userRoles.includes('Admin')) {
+    return status;
+  } else if (userRoles.includes('Customer')) {
+    if (shipment.user_id !== userId) {
+      throw new ApiError(403, 'Access denied. You can only view statuses for your shipments.');
+    }
+    return status;
+  } else if (userRoles.includes('Delivery Agent')) {
+    if (shipment.delivery_agent_id !== userId) {
+      throw new ApiError(403, 'Access denied. You can only view statuses for shipments you are assigned to.');
+    }
+    return status;
+  } else {
+    throw new ApiError(403, 'Access denied. You do not have permission to access this status.');
+  }
 };
 
 module.exports = {

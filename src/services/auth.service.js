@@ -61,12 +61,12 @@ const verifyOtp = async ({ email, otp }) => {
 const loginUser = async ({ email, password }) => {
   const user = await User.findOne({ where: { email } });
 
-  if (!user.is_email_verified) {
-    throw new ApiError(401, 'Email not verified');
-  }
-
   if (!user || !(await bcrypt.compare(password, user.password))) {
     throw new ApiError(401, 'Invalid credentials');
+  }
+
+  if (!user.is_email_verified) {
+    throw new ApiError(401, 'Email not verified');
   }
 
   const token = generateToken(user.id);
