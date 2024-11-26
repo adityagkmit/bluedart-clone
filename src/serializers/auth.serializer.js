@@ -14,10 +14,11 @@ const serializeAuthResponse = (req, res, next) => {
         user: {
           name: data.user.name,
           email: data.user.email,
-          phoneNumber: data.user.phone_number,
-          documentUrl: data.user.document_url,
-          isEmailVerified: data.user.is_email_verified,
-          isDocumentVerified: data.user.is_document_verified,
+          phoneNumber: data.user.phoneNumber,
+          documentUrl: data.user.documentUrl,
+          isEmailVerified: data.user.isEmailVerified,
+          isDocumentVerified: data.user.isDocumentVerified,
+          roles: data.user.roles,
         },
       };
     } else if (data.id) {
