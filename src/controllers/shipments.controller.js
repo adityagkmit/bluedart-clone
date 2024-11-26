@@ -17,8 +17,7 @@ const createShipment = async (req, res, next) => {
 // Get Shipments
 const getShipments = async (req, res, next) => {
   try {
-    const { page, limit, ...filters } = req.query;
-    const shipments = await shipmentService.getShipments(filters, page, limit);
+    const shipments = await shipmentService.getShipments(req.query);
     res.data = shipments;
     res.message = 'Shipments retrieved successfully';
     next();
@@ -88,61 +87,17 @@ const deleteShipment = async (req, res, next) => {
 // Update Shipment by actions
 const updateShipmentThroughAction = async (req, res, next) => {
   try {
-    const { action, deliveryAgentId, status, preferredDeliveryDate, preferredDeliveryTime } = req.body;
-    const { id } = req.params;
-    const userId = req.user.id;
-    const userRoles = req.user.Roles.map(role => role.name);
+    const result = await shipmentService.performActionOnShipment(req.params.id, req.body, req.user);
 
-    let updatedShipment;
-
-    switch (action) {
-      case 'updateStatus':
-        if (!userRoles.includes('Admin') && !userRoles.includes('Delivery Agent')) {
-          throw new ApiError(403, 'You do not have permission to update the status');
-        }
-        updatedShipment = await shipmentService.updateShipmentStatus(
-          {
-            shipmentId: id,
-            status: status,
-          },
-          req.user
-        );
-        res.message = 'Shipment status updated successfully';
-        break;
-
-      case 'assignAgent':
-        if (!userRoles.includes('Admin')) {
-          throw new ApiError(403, 'Only Admins can assign delivery agents');
-        }
-        updatedShipment = await shipmentService.assignDeliveryAgent(id, deliveryAgentId);
-        res.message = 'Delivery agent assigned successfully';
-        break;
-
-      case 'reschedule':
-        if (!userRoles.includes('Admin')) {
-          throw new ApiError(403, 'You are not authorized to reschedule this shipment');
-        }
-        updatedShipment = await shipmentService.rescheduleShipment(id, {
-          preferredDeliveryDate: preferredDeliveryDate,
-          preferredDeliveryTime: preferredDeliveryTime,
-          userId,
-          userRoles,
-        });
-        res.message = 'Shipment rescheduled successfully';
-        break;
-
-      default:
-        throw new ApiError(400, 'Invalid action');
-    }
-
-    if (!updatedShipment) {
+    if (!result) {
       throw new ApiError(404, 'Shipment not found or could not be updated');
     }
 
-    res.data = updatedShipment;
+    res.data = result.shipment;
+    res.message = result.message;
     next();
   } catch (error) {
-    next(new ApiError(400, error.message));
+    next(new ApiError(error.status || 400, error.message));
   }
 };
 

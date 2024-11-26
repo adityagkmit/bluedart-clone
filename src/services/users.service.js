@@ -1,5 +1,4 @@
-const { User, Role, UsersRoles, Payment, Shipment, Rate, Status } = require('../models');
-const { redisClient } = require('../config/redis');
+const { User, Role, UsersRoles, Payment, Shipment, Status } = require('../models');
 const { uploadFileToS3 } = require('../helpers/aws.helper');
 const bcrypt = require('bcryptjs');
 const { ApiError } = require('../helpers/response.helper');
@@ -39,14 +38,14 @@ const createUser = async ({ name, email, password, phoneNumber, roleName = 'Cust
     });
 
     await user.addRole(role);
-
-    await redisClient.del(`${email}_verified`);
   }
 
   return user;
 };
 
-const getAllUsers = async (page = 1, limit = 10) => {
+const getAllUsers = async data => {
+  const { page = 1, limit = 10 } = data;
+
   const offset = (page - 1) * limit;
 
   const { count, rows } = await User.findAndCountAll({
@@ -177,7 +176,8 @@ const deleteUserById = async userId => {
   return true;
 };
 
-const getShipmentsByUserId = async (userId, page = 1, limit = 10) => {
+const getShipmentsByUserId = async (userId, data) => {
+  const { page = 1, limit = 10 } = data;
   const offset = (page - 1) * limit;
 
   const shipments = await Shipment.findAndCountAll({
@@ -199,7 +199,8 @@ const getShipmentsByUserId = async (userId, page = 1, limit = 10) => {
   };
 };
 
-const getPaymentsByUserId = async (userId, page = 1, limit = 10) => {
+const getPaymentsByUserId = async (userId, data) => {
+  const { page = 1, limit = 10 } = data;
   const offset = (page - 1) * limit;
 
   const payments = await Payment.findAndCountAll({

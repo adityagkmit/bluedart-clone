@@ -32,13 +32,7 @@ const getPaymentById = async (req, res, next) => {
 // Get Payments (Paginated)
 const getPayments = async (req, res, next) => {
   try {
-    const { page, limit, ...filters } = req.query;
-
-    if (!req.user.Roles.some(role => role.name === 'Admin')) {
-      filters.user_id = req.user.id;
-    }
-
-    const payments = await paymentService.getPayments(filters, page, limit);
+    const payments = await paymentService.getPayments(req.query, req.user);
     res.data = payments;
     res.message = 'Payments retrieved successfully';
     next();

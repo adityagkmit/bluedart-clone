@@ -3,10 +3,7 @@ const { ApiError } = require('../helpers/response.helper');
 
 const generateShipmentReport = async (req, res, next) => {
   try {
-    const { id: userId, roles } = req.user;
-    const filters = req.body;
-
-    const report = await reportService.generateShipmentReport(filters, userId, roles);
+    const report = await reportService.generateShipmentReport(req.body, req.user);
     res.data = report;
     res.message = 'Shipment report generated successfully';
     next();
@@ -18,9 +15,7 @@ const generateShipmentReport = async (req, res, next) => {
 
 const generateCustomerReport = async (req, res, next) => {
   try {
-    const userId = req.user.id;
-
-    const report = await reportService.generateCustomerReport(req.body, userId);
+    const report = await reportService.generateCustomerReport(req.body, req.user);
     res.data = report;
     res.message = 'Customer report generated successfully';
     next();

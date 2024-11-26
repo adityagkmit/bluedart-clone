@@ -37,7 +37,9 @@ const createShipment = async (data, userId) => {
   return shipment;
 };
 
-const getShipments = async (filters, page = 1, limit = 10) => {
+const getShipments = async data => {
+  const { page = 1, limit = 10, ...filters } = data;
+
   const whereConditions = {};
 
   for (const [key, value] of Object.entries(filters)) {
@@ -235,6 +237,57 @@ const rescheduleShipment = async (shipmentId, data) => {
   return shipment;
 };
 
+const performActionOnShipment = async (shipmentId, data, user) => {
+  const { action, status, deliveryAgentId, preferredDeliveryDate, preferredDeliveryTime } = data;
+  const userRoles = user.Roles.map(role => role.name);
+
+  let updatedShipment;
+  let message;
+
+  switch (action) {
+    case 'updateStatus':
+      if (!userRoles.includes('Admin') && !userRoles.includes('Delivery Agent')) {
+        throw new ApiError(403, 'You do not have permission to update the status');
+      }
+      updatedShipment = await updateShipmentStatus({ shipmentId, status }, user);
+      message = 'Shipment status updated successfully';
+      break;
+
+    case 'assignAgent':
+      if (!userRoles.includes('Admin')) {
+        throw new ApiError(403, 'Only Admins can assign delivery agents');
+      }
+      updatedShipment = await assignDeliveryAgent(shipmentId, deliveryAgentId);
+      message = 'Delivery agent assigned successfully';
+      break;
+
+    case 'reschedule':
+      if (!userRoles.includes('Admin')) {
+        throw new ApiError(403, 'You are not authorized to reschedule this shipment');
+      }
+      updatedShipment = await rescheduleShipment(shipmentId, {
+        preferredDeliveryDate,
+        preferredDeliveryTime,
+        userId: user.id,
+        userRoles,
+      });
+      message = 'Shipment rescheduled successfully';
+      break;
+
+    default:
+      throw new ApiError(400, 'Invalid action');
+  }
+
+  if (!updatedShipment) {
+    throw new ApiError(404, 'Shipment not found or could not be updated');
+  }
+
+  return {
+    shipment: updatedShipment,
+    message,
+  };
+};
+
 const sendShipmentReminders = async () => {
   const shipments = await Shipment.findAll({
     where: {
@@ -286,4 +339,5 @@ module.exports = {
   assignDeliveryAgent,
   sendShipmentReminders,
   rescheduleShipment,
+  performActionOnShipment,
 };
