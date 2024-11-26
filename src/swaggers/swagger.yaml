@@ -18,7 +18,29 @@ tags:
   - name: statuses
   - name: payments
   - name: reports
+  - name: roles
+  - name: rates
 paths:
+  /auth/register:
+    post:
+      tags:
+        - auth
+      summary: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: user 22
+                email: user22@gmail.com
+                phoneNumber: '9873723934'
+                password: '123456'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
   /auth/send-otp:
     post:
       tags:
@@ -30,7 +52,7 @@ paths:
             schema:
               type: object
               example:
-                email: user11@gmail.com
+                email: user22@gmail.com
       responses:
         '200':
           description: Successful response
@@ -47,29 +69,8 @@ paths:
             schema:
               type: object
               example:
-                email: user11@gmail.com
-                otp: '340569'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json: {}
-  /auth/register:
-    post:
-      tags:
-        - auth
-      summary: register
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              example:
-                name: user 11
-                email: user11@gmail.com
-                phone_number: '9873543234'
-                password: '123456'
-                roleName: Delivery Agent
+                email: user22@gmail.com
+                otp: '927749'
       responses:
         '200':
           description: Successful response
@@ -190,9 +191,9 @@ paths:
             schema:
               type: object
               example:
-                name: user 11
-                email: user11@gmail.com
-                phone_number: '9873543234'
+                name: user 13
+                email: user13@gmail.com
+                phoneNumber: '8873244234'
                 password: '123456'
                 roleName: Delivery Agent
       security:
@@ -237,11 +238,28 @@ paths:
           description: Successful response
           content:
             application/json: {}
+  /users/{id}/shipments:
+    get:
+      tags:
+        - users
+      summary: get user shipments
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 7d17a949-d1bd-46ab-a826-9b5cba7d34c9
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
   /users/{id}/payments:
     get:
       tags:
         - users
-      summary: getl user payments
+      summary: getl user payments (ADMIN, SELF)
       parameters:
         - name: Authorization
           in: header
@@ -290,7 +308,7 @@ paths:
     patch:
       tags:
         - users
-      summary: verify document
+      summary: verify document (ADMIN)
       requestBody:
         content: {}
       parameters:
@@ -332,17 +350,17 @@ paths:
             schema:
               type: object
               example:
-                pickup_address: 123 MG Road, Bengaluru, Karnataka, 560001
-                delivery_address: 456 Park Street, Mumbai, Maharashtra, 400001
+                pickupAddress: 123 MG Road, Bengaluru, Rajasthan, 560001
+                deliveryAddress: 456 Park Street, Mumbai, Maharashtra, 400001
                 weight: 5
                 dimensions:
                   length: 4
                   width: 2.5
                   height: 2
-                is_fragile: true
-                delivery_option: Express
-                preferred_delivery_date: '2024-12-10'
-                preferred_delivery_time: '16:00:00'
+                isFragile: true
+                deliveryOption: Express
+                preferredDeliveryDate: '2024-12-10'
+                preferredDeliveryTime: '16:00:00'
       parameters:
         - name: Authorization
           in: header
@@ -398,17 +416,17 @@ paths:
             schema:
               type: object
               example:
-                pickup_address: 123 MG Road, Bengaluru, Karnataka, 560001
-                delivery_address: 456 Park Street, Mumbai, Maharashtra, 400001
+                pickupAddress: 123 MG Road, Bengaluru, Karnataka, 560001
+                deliveryAddress: 456 Park Street, Mumbai, Maharashtra, 400001
                 weight: 5
                 dimensions:
                   length: 4
                   width: 2.5
                   height: 2
-                is_fragile: false
-                delivery_option: Express
-                preferred_delivery_date: '2024-12-10'
-                preferred_delivery_time: '16:00:00'
+                isFragile: true
+                deliveryOption: Express
+                preferredDeliveryDate: '2025-12-10'
+                preferredDeliveryTime: '16:00:00'
       parameters:
         - name: Authorization
           in: header
@@ -449,18 +467,18 @@ paths:
           description: Successful response
           content:
             application/json: {}
-  /shipments/{id}/status:
     patch:
       tags:
         - shipments
-      summary: update shipment status
+      summary: update shipment by actions
       requestBody:
         content:
           application/json:
             schema:
               type: object
               example:
-                status: Pending
+                action: updateStatus
+                status: Out for Delivery
       parameters:
         - name: Authorization
           in: header
@@ -473,37 +491,7 @@ paths:
           schema:
             type: string
           required: true
-          example: ada02826-6fd3-4a69-b047-783fad0cd507
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json: {}
-  /shipments/{id}/assign-agent:
-    patch:
-      tags:
-        - shipments
-      summary: assign delivery agent
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              example:
-                delivery_agent_id: a2a84898-0f2e-4d94-8aae-134acad25e86
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          example: >-
-            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
-        - name: id
-          in: path
-          schema:
-            type: string
-          required: true
-          example: ada02826-6fd3-4a69-b047-783fad0cd507
+          example: 7b98248a-4b58-49d6-9c2b-e073d1128ade
       responses:
         '200':
           description: Successful response
@@ -526,63 +514,7 @@ paths:
           schema:
             type: string
           required: true
-          example: 463e31b1-857e-4688-a5ef-8232a4323343
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json: {}
-  /shipments/{id}/reschedule:
-    patch:
-      tags:
-        - shipments
-      summary: reschedule delivery
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              example:
-                preferred_delivery_date: '2024-12-15'
-                preferred_delivery_time: '14:00:00'
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          example: >-
-            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE1NTQ5OSwiZXhwIjoxNzMyMTU5MDk5fQ.qt3xZchCX2jASybGfGkZu1M5DY0sZtVMiIZxaLTyaK0
-        - name: id
-          in: path
-          schema:
-            type: string
-          required: true
-          example: 7737248c-52b5-45ec-9c9b-199464b51f40
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json: {}
-  /statuses:
-    post:
-      tags:
-        - statuses
-      summary: create status
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              example:
-                shipment_id: 463e31b1-857e-4688-a5ef-8232a4323343
-                name: Delivered
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          example: >-
-            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTYzODg1NCwiZXhwIjoxNzMxNjQyNDU0fQ.fu9NNXH7K5eET38bw8E7dUuDLN94hCg8KsRrzIP2uzQ
+          example: 7b98248a-4b58-49d6-9c2b-e073d1128ade
       responses:
         '200':
           description: Successful response
@@ -593,6 +525,8 @@ paths:
       tags:
         - statuses
       summary: get status by id
+      security:
+        - bearerAuth: []
       parameters:
         - name: Authorization
           in: header
@@ -605,22 +539,7 @@ paths:
           schema:
             type: string
           required: true
-          example: 2788ef36-9834-4171-b183-caf1af2840ab
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json: {}
-    delete:
-      tags:
-        - statuses
-      summary: delete status by id
-      parameters:
-        - name: id
-          in: path
-          schema:
-            type: string
-          required: true
+          example: b38716c8-e5bc-47db-8225-a219192b2955
       responses:
         '200':
           description: Successful response
@@ -637,8 +556,9 @@ paths:
             schema:
               type: object
               example:
-                shipment_id: ada02826-6fd3-4a69-b047-783fad0cd507
-                method: Online
+                shipmentId: 7b98248a-4b58-49d6-9c2b-e073d1128ade
+                method: COD
+                transactionDetails: Payment for shipment
       parameters:
         - name: Authorization
           in: header
@@ -654,7 +574,7 @@ paths:
     get:
       tags:
         - payments
-      summary: get payments
+      summary: get payments (ADMIN)
       parameters:
         - name: Authorization
           in: header
@@ -667,13 +587,17 @@ paths:
           description: Successful response
           content:
             application/json: {}
-  /payments/{id}/status:
+  /payments/{id}:
     patch:
       tags:
         - payments
-      summary: update shipment status on COD
+      summary: update shipment status on COD (DELIVERY AGENT)
       requestBody:
-        content: {}
+        content:
+          application/json:
+            schema:
+              type: object
+              example: ''
       parameters:
         - name: Authorization
           in: header
@@ -686,13 +610,12 @@ paths:
           schema:
             type: string
           required: true
-          example: 2234367b-7790-4ddc-a4d5-766040deadeb
+          example: 6530c1a4-cbbf-464a-8329-cc18606e6128
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
-  /payments/{id}:
     get:
       tags:
         - payments
@@ -719,7 +642,7 @@ paths:
     post:
       tags:
         - reports
-      summary: generate shipment report
+      summary: generate shipment report (ADMIN)
       requestBody:
         content:
           application/json:
@@ -735,16 +658,6 @@ paths:
             type: string
           example: >-
             eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMjE2NjE1NCwiZXhwIjoxNzMyMTY5NzU0fQ.mdfr5nkgv28gb6sHHX4ryg1aWHA0RGbkRrLctpAFdEM
-        - name: startDate
-          in: query
-          schema:
-            type: string
-          example: '2024-01-01'
-        - name: endDate
-          in: query
-          schema:
-            type: string
-          example: '2025-04-01'
       responses:
         '200':
           description: Successful response
@@ -754,7 +667,7 @@ paths:
     post:
       tags:
         - reports
-      summary: generate customer report
+      summary: generate customer report (CUSTOMER)
       requestBody:
         content:
           application/json:
@@ -770,6 +683,26 @@ paths:
             type: string
           example: >-
             eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdkMTdhOTQ5LWQxYmQtNDZhYi1hODI2LTliNWNiYTdkMzRjOSIsImlhdCI6MTczMTg1ODI5OSwiZXhwIjoxNzMxODYxODk5fQ._4qftoDlsY75khSSiWZilGh7wa2xkNbzlIGtk8_Q7hU
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /roles:
+    get:
+      tags:
+        - roles
+      summary: get all roles
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /rates:
+    get:
+      tags:
+        - rates
+      summary: get all rates
       responses:
         '200':
           description: Successful response
