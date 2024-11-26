@@ -145,7 +145,15 @@ const getPaymentById = async (id, user) => {
   return payment;
 };
 
-const getPayments = async (filters, page = 1, limit = 10) => {
+const getPayments = async (data, user) => {
+  const { page = 1, limit = 10, ...filters } = data;
+
+  if (!user.Roles.some(role => role.name === 'Admin')) {
+    filters.user_id = user.id;
+  }
+
+  console.log(data);
+
   const whereConditions = {};
 
   // Dynamically construct filter conditions
