@@ -15,8 +15,7 @@ const getCurrentUser = async (req, res, next) => {
 // Get All Users
 const getAllUsers = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-    const users = await userService.getAllUsers(Number(page), Number(limit));
+    const users = await userService.getAllUsers(req.query);
     res.data = users;
     res.message = 'Users retrieved successfully';
     next();
@@ -56,8 +55,7 @@ const createUser = async (req, res, next) => {
 // Update User
 const updateUser = async (req, res, next) => {
   try {
-    const userId = req.params.id;
-    const updatedUser = await userService.updateUserById(userId, req.body);
+    const updatedUser = await userService.updateUserById(req.params.id, req.body);
 
     if (!updatedUser) {
       return next(new ApiError(404, 'User not found or no changes made'));
@@ -74,8 +72,7 @@ const updateUser = async (req, res, next) => {
 // Delete User
 const deleteUser = async (req, res, next) => {
   try {
-    const userId = req.params.id;
-    await userService.deleteUserById(userId);
+    await userService.deleteUserById(req.params.id);
     res.data = null;
     res.message = 'User deleted successfully';
     next();
@@ -87,10 +84,7 @@ const deleteUser = async (req, res, next) => {
 // Get User Shipments
 const getUserShipments = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const { page = 1, limit = 10 } = req.query;
-
-    const shipments = await userService.getShipmentsByUserId(id, Number(page), Number(limit));
+    const shipments = await userService.getShipmentsByUserId(req.params.id, req.query);
     res.data = shipments;
     res.message = 'User Shipments retrieved successfully';
     next();
@@ -102,9 +96,7 @@ const getUserShipments = async (req, res, next) => {
 // Get User Payments
 const getUserPayments = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const { page = 1, limit = 10 } = req.query;
-    const payments = await userService.getPaymentsByUserId(id, Number(page), Number(limit));
+    const payments = await userService.getPaymentsByUserId(req.params.id, req.query);
     res.data = payments;
     res.message = 'User payments retrieved successfully';
     next();
@@ -132,8 +124,7 @@ const uploadDocument = async (req, res, next) => {
 // Verify Document
 const verifyDocument = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    await userService.verifyUserDocument(id);
+    await userService.verifyUserDocument(req.params.id);
     res.message = 'Document verified successfully';
     next();
   } catch (error) {
