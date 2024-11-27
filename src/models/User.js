@@ -6,7 +6,7 @@ class User extends Model {
     User.hasMany(models.Payment, { foreignKey: 'user_id' });
     User.hasMany(models.Report, { foreignKey: 'user_id' });
     User.belongsToMany(models.Role, {
-      through: models.UsersRoles,
+      through: models.UserRole,
       foreignKey: 'user_id',
     });
   }
