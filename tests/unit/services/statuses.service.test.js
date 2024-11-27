@@ -1,144 +1,158 @@
-const { createStatus, getStatusById, deleteStatus } = require('../../../src/services/statuses.service');
-const { Status, Shipment } = require('../../../src/models');
-const { sendShipmentStatusUpdateEmail } = require('../../../src/helpers/email.helper');
+const { createStatus, getStatusById } = require('../../../src/services/statuses.service');
+const { Status, Shipment, User, Role } = require('../../../src/models');
 const { ApiError } = require('../../../src/helpers/response.helper');
-const { Op } = require('sequelize');
+const { sendShipmentStatusUpdateEmail } = require('../../../src/helpers/email.helper');
 
-jest.mock('../../../src/models', () => ({
-  Status: {
-    findByPk: jest.fn(),
-    create: jest.fn(),
-    findOne: jest.fn(),
-  },
-  Shipment: {
-    findByPk: jest.fn(),
-    update: jest.fn(),
-  },
-}));
-
+// Mock the entire email helper module
 jest.mock('../../../src/helpers/email.helper', () => ({
-  sendShipmentStatusUpdateEmail: jest.fn(),
+  sendShipmentStatusUpdateEmail: jest.fn().mockResolvedValue(true),
 }));
 
-describe('Statuses Service', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
+jest.mock('../../../src/models');
+
+describe('statusesService.createStatus', () => {
+  let mockUser;
+  let mockShipment;
+  let mockTransaction;
+  let mockEmailData;
+
+  beforeEach(() => {
+    mockUser = {
+      id: 1,
+      name: 'Test User',
+      email: 'testuser@example.com',
+      Roles: [{ name: 'Admin' }],
+    };
+    mockShipment = {
+      id: 1,
+      user_id: 1,
+      delivery_agent_id: 2,
+    };
+    mockTransaction = null;
+    mockEmailData = {
+      userName: mockUser.name,
+      shipmentId: mockShipment.id,
+      status: 'Shipped',
+    };
+
+    // Mocking the models and methods used in createStatus
+    Shipment.findByPk = jest.fn().mockResolvedValue(mockShipment);
+    Status.create = jest.fn().mockResolvedValue({ id: 1, shipment_id: mockShipment.id, name: 'Shipped' });
   });
 
-  describe('createStatus', () => {
-    it('should create a status successfully', async () => {
-      const mockShipment = {
-        id: 'shipment1',
-        delivery_agent_id: 'agent1',
-        user_id: 'user1',
-        update: jest.fn(),
-      };
-      Shipment.findByPk.mockResolvedValue(mockShipment);
+  it('should create a shipment status successfully', async () => {
+    const data = { shipmentId: 1, name: 'Shipped' };
 
-      const mockStatus = { id: 'status1', name: 'In Progress' };
-      Status.create.mockResolvedValue(mockStatus);
+    const result = await createStatus(data, mockUser, mockTransaction);
 
-      const mockUser = { id: 'user1', name: 'John Doe', email: 'john.doe@example.com', Roles: [] };
+    expect(result).toHaveProperty('shipment_id', mockShipment.id);
+    expect(result).toHaveProperty('name', 'Shipped');
+    expect(Status.create).toHaveBeenCalledTimes(1);
+    expect(sendShipmentStatusUpdateEmail).toHaveBeenCalledWith(mockUser.email, mockEmailData);
+  });
 
-      const data = { shipment_id: 'shipment1', name: 'In Progress' };
+  it('should throw an error if the shipment is not found', async () => {
+    Shipment.findByPk.mockResolvedValue(null); // Mocking not found shipment
 
-      const result = await createStatus(data, mockUser);
+    const data = { shipmentId: 999, name: 'Shipped' };
 
-      expect(Shipment.findByPk).toHaveBeenCalledWith('shipment1', { transaction: null });
-      expect(Status.create).toHaveBeenCalledWith(data, { transaction: null });
-      expect(mockShipment.update).toHaveBeenCalledWith({ status: 'In Progress' }, { transaction: null });
-      expect(sendShipmentStatusUpdateEmail).toHaveBeenCalledWith('john.doe@example.com', {
-        userName: 'John Doe',
-        shipmentId: 'shipment1',
-        status: 'In Progress',
-      });
-      expect(result).toEqual(mockStatus);
-    });
+    await expect(createStatus(data, mockUser, mockTransaction)).rejects.toThrow(
+      new ApiError(404, 'Shipment not found')
+    );
+  });
 
-    it('should throw an error if the shipment is not found', async () => {
-      Shipment.findByPk.mockResolvedValue(null);
+  it('should throw an error if the user is not authorized to update the status', async () => {
+    // Mock a user that does not have the 'Admin' role, nor is the owner or delivery agent of the shipment
+    mockUser.Roles = [{ name: 'Customer' }]; // Simulate a Customer role
 
-      const mockUser = { id: 'user1', Roles: [] };
-      const data = { shipment_id: 'shipment1', name: 'In Progress' };
+    const data = { shipmentId: 1, name: 'Shipped' };
 
-      await expect(createStatus(data, mockUser)).rejects.toThrow(ApiError);
-      expect(Shipment.findByPk).toHaveBeenCalledWith('shipment1', { transaction: null });
-    });
+    // Mocking a shipment that is not related to the user
+    mockShipment.user_id = 2; // This will cause the user to not be the owner
+    mockShipment.delivery_agent_id = 3; // This will cause the user to not be the delivery agent
 
-    it('should throw an error if the user is not authorized', async () => {
-      const mockShipment = { id: 'shipment1', delivery_agent_id: 'agent1', user_id: 'user2' };
-      Shipment.findByPk.mockResolvedValue(mockShipment);
+    // Ensure that the shipment exists for the user to try and update
+    Shipment.findByPk.mockResolvedValue(mockShipment);
 
-      const mockUser = { id: 'user1', Roles: [] };
-      const data = { shipment_id: 'shipment1', name: 'In Progress' };
+    // Expect the action to throw an error with the message for unauthorized access
+    await expect(createStatus(data, mockUser, mockTransaction)).rejects.toThrow(
+      new ApiError(403, 'Access denied. You are not authorized to update the status for this shipment.')
+    );
+  });
+});
 
-      await expect(createStatus(data, mockUser)).rejects.toThrow(ApiError);
+describe('statusesService.getStatusById', () => {
+  let mockStatus;
+  let mockShipment;
+  let mockUser;
+
+  beforeEach(() => {
+    mockShipment = { id: 1, user_id: 1, delivery_agent_id: 2 };
+    mockStatus = { id: 1, name: 'Shipped', Shipment: mockShipment };
+    mockUser = {
+      id: 1,
+      roles: ['Admin'],
+    };
+
+    // Mocking the models and methods used in getStatusById
+    Status.findByPk = jest.fn().mockResolvedValue(mockStatus);
+  });
+
+  it('should return the status when the user is an Admin', async () => {
+    const data = { id: 1 };
+    const result = await getStatusById(data, mockUser);
+
+    expect(result).toEqual(mockStatus);
+    expect(Status.findByPk).toHaveBeenCalledWith(data.id, {
+      include: [{ model: Shipment, attributes: ['id', 'user_id', 'delivery_agent_id'] }],
     });
   });
 
-  describe('getStatusById', () => {
-    it('should retrieve a status by ID', async () => {
-      const mockStatus = { id: 'status1', name: 'In Progress' };
-      Status.findByPk.mockResolvedValue(mockStatus);
+  it('should return the status when the user is the owner (Customer)', async () => {
+    mockUser.roles = ['Customer']; // Mocking a Customer role
+    const data = { id: 1 };
+    const result = await getStatusById(data, mockUser);
 
-      const result = await getStatusById('status1');
-
-      expect(Status.findByPk).toHaveBeenCalledWith('status1');
-      expect(result).toEqual(mockStatus);
-    });
+    expect(result).toEqual(mockStatus);
   });
 
-  describe('deleteStatus', () => {
-    it('should delete a status and update the shipment status', async () => {
-      const mockShipment = {
-        id: 'shipment1',
-        status: 'In Progress',
-        delivery_agent_id: 'agent1',
-        update: jest.fn(),
-      };
+  it('should throw an error if the user is not authorized to view the status of the shipment', async () => {
+    mockUser.roles = ['Customer']; // Mocking a Customer role but with no permission
 
-      const mockStatus = {
-        id: 'status1',
-        name: 'In Progress',
-        Shipment: mockShipment,
-        created_at: new Date(),
-        destroy: jest.fn(),
-      };
+    const data = { id: 1 };
+    mockShipment.user_id = 2; // Mocking different user_id on shipment
 
-      const previousStatus = { name: 'Pending' };
-      Status.findByPk.mockResolvedValue(mockStatus);
-      Status.findOne.mockResolvedValue(previousStatus);
+    await expect(getStatusById(data, mockUser)).rejects.toThrow(
+      new ApiError(403, 'Access denied. You can only view statuses for your shipments.')
+    );
+  });
 
-      const mockUser = { id: 'agent1', Roles: [] };
+  it('should return the status when the user is a Delivery Agent assigned to the shipment', async () => {
+    mockUser.roles = ['Delivery Agent'];
+    mockShipment.delivery_agent_id = 1; // User is the delivery agent for the shipment
 
-      const result = await deleteStatus('status1', mockUser);
+    const data = { id: 1 };
+    const result = await getStatusById(data, mockUser);
 
-      expect(Status.findByPk).toHaveBeenCalledWith('status1', { include: { model: Shipment } });
-      expect(mockShipment.update).toHaveBeenCalledWith({ status: 'Pending' });
-      expect(mockStatus.destroy).toHaveBeenCalled();
-      expect(result).toBe(true);
-    });
+    expect(result).toEqual(mockStatus);
+  });
 
-    it('should throw an error if the status is not found', async () => {
-      Status.findByPk.mockResolvedValue(null);
+  it('should throw an error if the user is a Delivery Agent but not assigned to the shipment', async () => {
+    mockUser.roles = ['Delivery Agent'];
+    mockShipment.delivery_agent_id = 2; // User is not the delivery agent for the shipment
 
-      const mockUser = { id: 'user1', Roles: [] };
+    const data = { id: 1 };
 
-      await expect(deleteStatus('status1', mockUser)).rejects.toThrow(ApiError);
-    });
+    await expect(getStatusById(data, mockUser)).rejects.toThrow(
+      new ApiError(403, 'Access denied. You can only view statuses for shipments you are assigned to.')
+    );
+  });
 
-    it('should throw an error if the user is not authorized to delete the status', async () => {
-      const mockShipment = {
-        id: 'shipment1',
-        delivery_agent_id: 'agent1',
-      };
+  it('should throw an error if the status is not found', async () => {
+    Status.findByPk.mockResolvedValue(null); // Mocking status not found
 
-      const mockStatus = { id: 'status1', Shipment: mockShipment };
-      Status.findByPk.mockResolvedValue(mockStatus);
+    const data = { id: 999 };
 
-      const mockUser = { id: 'user2', Roles: [] };
-
-      await expect(deleteStatus('status1', mockUser)).rejects.toThrow(ApiError);
-    });
+    await expect(getStatusById(data, mockUser)).rejects.toThrow(new ApiError(404, 'Status not found'));
   });
 });

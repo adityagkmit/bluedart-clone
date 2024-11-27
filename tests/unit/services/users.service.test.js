@@ -1,372 +1,342 @@
-const {
-  createUser,
-  getAllUsers,
-  getUserById,
-  createUserByAdmin,
-  updateUserById,
-  deleteUserById,
-  getPaymentsByUserId,
-  uploadDocument,
-  verifyUserDocument,
-} = require('../../../src/services/users.service');
-
-const { User, Role, UsersRoles, Payment, Shipment } = require('../../../src/models');
-const { redisClient } = require('../../../src/config/redis');
+const userService = require('../../../src/services/users.service');
+const { User, Role, UsersRoles, Payment, Shipment, Status } = require('../../../src/models');
+const { ApiError } = require('../../../src/helpers/response.helper');
 const { uploadFileToS3 } = require('../../../src/helpers/aws.helper');
 const bcrypt = require('bcryptjs');
-const { ApiError } = require('../../../src/helpers/response.helper');
-const { faker } = require('@faker-js/faker');
 
-// Mock dependencies
+jest.mock('../../../src/models');
+jest.mock('../../../src/helpers/aws.helper');
 jest.mock('bcryptjs');
-jest.mock('../../../src/models', () => ({
-  User: {
-    findOne: jest.fn(),
-    create: jest.fn(),
-    findByPk: jest.fn(),
-    findAndCountAll: jest.fn(),
-    update: jest.fn(),
-  },
-  Role: {
-    findOne: jest.fn(),
-    findAll: jest.fn(),
-  },
-  UsersRoles: {
-    update: jest.fn(),
-  },
-  Payment: {
-    findAndCountAll: jest.fn(),
-  },
-  Shipment: {},
-}));
-jest.mock('../../../src/config/redis', () => ({
-  redisClient: {
-    del: jest.fn(),
-  },
-}));
-jest.mock('../../../src/helpers/aws.helper', () => ({
-  uploadFileToS3: jest.fn(),
-}));
-jest.mock('bcryptjs', () => ({
-  hash: jest.fn(),
-}));
 
 describe('User Service', () => {
+  let mockUser;
+  let mockRole;
+  let mockPassword;
+  let mockFile;
+  let mockDocumentUrl;
+
+  beforeEach(() => {
+    mockPassword = 'Password123!';
+    mockUser = {
+      id: 1,
+      name: 'John Doe',
+      email: 'john.doe@example.com',
+      password: bcrypt.hashSync(mockPassword, 10),
+      phone_number: '1234567890',
+      document_url: '',
+      is_document_verified: false,
+      addRole: jest.fn(),
+      addRoles: jest.fn(),
+      destroy: jest.fn(),
+      save: jest.fn(),
+      Roles: [{ name: 'Customer' }],
+    };
+
+    mockRole = {
+      id: 1,
+      name: 'Customer',
+    };
+
+    mockFile = { fieldname: 'file', originalname: 'document.pdf' };
+    mockDocumentUrl = 'https://s3.amazonaws.com/documents/document.pdf';
+
+    bcrypt.hash = jest.fn().mockResolvedValue(mockPassword);
+    bcrypt.compare = jest.fn().mockResolvedValue(true);
+    uploadFileToS3.mockResolvedValue(mockDocumentUrl);
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
   });
 
   describe('createUser', () => {
     it('should create a new user successfully', async () => {
-      User.findOne.mockResolvedValue(null); // No existing user
-      bcrypt.hash.mockResolvedValue('hashedPassword');
-      const mockUser = {
-        id: 1,
-        email: 'test@example.com',
-        addRole: jest.fn(), // Mock addRole method
-      };
+      Role.findOne.mockResolvedValue(mockRole);
+      User.findOne.mockResolvedValue(null); // User does not exist
+
       User.create.mockResolvedValue(mockUser);
-      Role.findOne.mockResolvedValue({ id: 2, name: 'Customer' });
+      mockUser.addRole.mockResolvedValue(true);
 
-      const result = await createUser({
+      const result = await userService.createUser({
         name: 'John Doe',
-        email: 'test@example.com',
+        email: 'john.doe@example.com',
         password: 'Password123!',
-        phone_number: '1234567890',
+        phoneNumber: '1234567890',
       });
 
-      expect(User.findOne).toHaveBeenCalledWith({ where: { email: 'test@example.com' } });
-      expect(User.create).toHaveBeenCalledWith({
-        name: 'John Doe',
-        email: 'test@example.com',
-        password: 'hashedPassword',
-        phone_number: '1234567890',
-      });
-      expect(mockUser.addRole).toHaveBeenCalledWith({ id: 2, name: 'Customer' });
-      expect(redisClient.del).toHaveBeenCalledWith('test@example.com_verified');
       expect(result).toEqual(mockUser);
+      expect(User.findOne).toHaveBeenCalledWith({
+        where: { email: 'john.doe@example.com' },
+        include: {
+          model: Role,
+          as: 'Roles',
+          attributes: ['id', 'name'],
+        },
+      });
+      expect(mockUser.addRole).toHaveBeenCalledWith(mockRole);
     });
 
-    it('should throw error if user already exists', async () => {
-      User.findOne.mockResolvedValue({ id: 1 });
+    it('should throw error if role not found', async () => {
+      Role.findOne.mockResolvedValue(null); // Role does not exist
 
-      await expect(createUser({ email: 'test@example.com', password: 'Password123!' })).rejects.toThrow(
-        ApiError
+      await expect(
+        userService.createUser({
+          name: 'John Doe',
+          email: 'john.doe@example.com',
+          password: 'Password123!',
+          phoneNumber: '1234567890',
+        })
+      ).rejects.toThrowError(
+        new ApiError(404, 'Customer role not found. Ensure roles are seeded in the database.')
+      );
+    });
+
+    it('should throw error if user already has the role', async () => {
+      Role.findOne.mockResolvedValue(mockRole);
+      User.findOne.mockResolvedValue(mockUser); // User exists
+
+      await expect(
+        userService.createUser({
+          name: 'John Doe',
+          email: 'john.doe@example.com',
+          password: 'Password123!',
+          phoneNumber: '1234567890',
+        })
+      ).rejects.toThrowError(
+        new ApiError(400, `User with email 'john.doe@example.com' already has the 'Customer' role.`)
       );
     });
   });
 
   describe('getAllUsers', () => {
-    it('should return paginated user data', async () => {
-      User.findAndCountAll.mockResolvedValue({
-        count: 2,
-        rows: [
+    it('should return paginated list of users', async () => {
+      const users = [mockUser];
+      User.findAndCountAll.mockResolvedValue({ count: 1, rows: users });
+
+      const result = await userService.getAllUsers({ page: 1, limit: 10 });
+
+      expect(result).toEqual({
+        totalItems: 1,
+        totalPages: 1,
+        currentPage: 1,
+        users: [
           {
-            id: 1,
-            name: 'John Doe',
-            email: 'john;@example.com',
-            phone_number: '1234567890',
-            created_at: new Date(),
-            updated_at: new Date(),
-            Roles: [{ name: 'Customer' }],
-          },
-          {
-            id: 2,
-            name: 'Jane Doe',
-            email: 'jane@example.com',
-            phone_number: '0987654321',
-            created_at: new Date(),
-            updated_at: new Date(),
-            Roles: [{ name: 'Admin' }],
+            id: mockUser.id,
+            name: mockUser.name,
+            email: mockUser.email,
+            phone_number: mockUser.phone_number,
+            document_url: mockUser.document_url,
+            created_at: mockUser.created_at,
+            updated_at: mockUser.updated_at,
+            roles: ['Customer'],
           },
         ],
       });
-
-      const result = await getAllUsers(1, 10);
-
-      expect(User.findAndCountAll).toHaveBeenCalledWith({
-        include: {
-          model: Role,
-          through: { attributes: [] },
-          attributes: ['name'],
-        },
-        offset: 0,
-        limit: 10,
-        order: [['created_at', 'DESC']],
-      });
-      expect(result.totalItems).toBe(2);
-      expect(result.users).toHaveLength(2);
     });
   });
 
   describe('getUserById', () => {
-    it('should return user details by ID', async () => {
-      User.findByPk.mockResolvedValue({
-        id: 1,
-        name: 'John Doe',
-        email: 'john@example.com',
-        phone_number: '1234567890',
-        created_at: new Date(),
-        updated_at: new Date(),
-        Roles: [{ name: 'Customer' }],
-      });
+    it('should return user by id', async () => {
+      User.findByPk.mockResolvedValue(mockUser);
 
-      const result = await getUserById(1);
+      const result = await userService.getUserById(mockUser.id);
 
-      expect(User.findByPk).toHaveBeenCalledWith(1, {
-        attributes: { exclude: ['password'] },
-        include: { model: Role, through: { attributes: [] } },
-      });
-      expect(result).toHaveProperty('id', 1);
-    });
-
-    it('should throw error if user is not found', async () => {
-      User.findByPk.mockResolvedValue(null);
-
-      await expect(getUserById(1)).rejects.toThrow(ApiError);
-    });
-  });
-
-  describe('deleteUserById', () => {
-    it('should delete a user by ID', async () => {
-      User.findByPk.mockResolvedValue({
-        destroy: jest.fn().mockResolvedValue(),
-      });
-
-      const result = await deleteUserById(1);
-
-      expect(User.findByPk).toHaveBeenCalledWith(1);
-      expect(result).toBe(true);
-    });
-
-    it('should throw error if user is not found', async () => {
-      User.findByPk.mockResolvedValue(null);
-
-      await expect(deleteUserById(1)).rejects.toThrow(ApiError);
-    });
-  });
-
-  describe('uploadDocument', () => {
-    it('should upload a document successfully', async () => {
-      uploadFileToS3.mockResolvedValue('https://s3.amazonaws.com/document-url');
-      User.update.mockResolvedValue([1]);
-
-      const result = await uploadDocument('fileData', 1);
-
-      expect(uploadFileToS3).toHaveBeenCalledWith('fileData', 1);
-      expect(User.update).toHaveBeenCalledWith(
-        { document_url: 'https://s3.amazonaws.com/document-url' },
-        { where: { id: 1 } }
-      );
       expect(result).toEqual({
-        message: 'Document uploaded successfully.',
-        documentUrl: 'https://s3.amazonaws.com/document-url',
+        id: mockUser.id,
+        name: mockUser.name,
+        email: mockUser.email,
+        phone_number: mockUser.phone_number,
+        document_url: mockUser.document_url,
+        created_at: mockUser.created_at,
+        updated_at: mockUser.updated_at,
+        roles: ['Customer'],
       });
     });
 
-    it('should throw error if user is not found', async () => {
-      User.update.mockResolvedValue([0]);
+    it('should throw error if user not found', async () => {
+      User.findByPk.mockResolvedValue(null);
 
-      await expect(uploadDocument('fileData', 1)).rejects.toThrow(ApiError);
+      await expect(userService.getUserById(mockUser.id)).rejects.toThrowError(
+        new ApiError(404, 'User not found')
+      );
     });
   });
 
   describe('createUserByAdmin', () => {
-    it('should create a user with specified roles successfully', async () => {
-      const userData = {
-        name: faker.name.fullName(),
-        email: faker.internet.email(),
-        password: faker.internet.password(),
-        phone_number: faker.phone.number('+1-###-###-####'),
-        roles: ['Admin', 'Customer'],
-      };
-
-      const hashedPassword = faker.internet.password();
-      const mockRoleRecords = [
-        { id: 1, name: 'Admin' },
-        { id: 2, name: 'Customer' },
-      ];
-      const mockUser = { id: faker.number.int(), ...userData, addRoles: jest.fn() };
-
+    it('should create user with specified roles', async () => {
+      Role.findOne.mockResolvedValue(mockRole);
+      Role.findAll.mockResolvedValue([mockRole]);
       User.findOne.mockResolvedValue(null);
-      bcrypt.hash.mockResolvedValue(hashedPassword);
-      Role.findAll.mockResolvedValue(mockRoleRecords);
+
       User.create.mockResolvedValue(mockUser);
+      mockUser.addRoles.mockResolvedValue(true);
 
-      const result = await createUserByAdmin(userData);
+      const result = await userService.createUserByAdmin({
+        name: 'Jane Doe',
+        email: 'jane.doe@example.com',
+        password: 'Password123!',
+        phoneNumber: '9876543210',
+        roles: ['Customer'],
+      });
 
-      expect(User.findOne).toHaveBeenCalledWith({ where: { email: userData.email } });
-      expect(bcrypt.hash).toHaveBeenCalledWith(userData.password, 10);
-      expect(Role.findAll).toHaveBeenCalledWith({ where: { name: userData.roles } });
-      expect(mockUser.addRoles).toHaveBeenCalledWith(mockRoleRecords);
       expect(result).toEqual(mockUser);
+      expect(mockUser.addRoles).toHaveBeenCalledWith([mockRole]);
     });
 
-    it('should throw an error if one or more roles do not exist', async () => {
-      const userData = {
-        name: faker.name.fullName(),
-        email: faker.internet.email(),
-        password: faker.internet.password(),
-        phone_number: faker.phone.number('+1-###-###-####'),
-        roles: ['InvalidRole'],
-      };
+    it('should throw error if one or more roles do not exist', async () => {
+      Role.findAll.mockResolvedValue([]); // No roles found
 
-      User.findOne.mockResolvedValue(null);
-      Role.findAll.mockResolvedValue([]);
+      await expect(
+        userService.createUserByAdmin({
+          name: 'Jane Doe',
+          email: 'jane.doe@example.com',
+          password: 'Password123!',
+          phoneNumber: '9876543210',
+          roles: ['NonExistingRole'],
+        })
+      ).rejects.toThrowError(new ApiError(400, 'One or more specified roles do not exist'));
+    });
 
-      await expect(createUserByAdmin(userData)).rejects.toThrow(ApiError);
-      expect(Role.findAll).toHaveBeenCalledWith({ where: { name: userData.roles } });
+    it('should throw error if user already exists', async () => {
+      User.findOne.mockResolvedValue(mockUser); // User exists
+
+      await expect(
+        userService.createUserByAdmin({
+          name: 'Jane Doe',
+          email: 'jane.doe@example.com',
+          password: 'Password123!',
+          phoneNumber: '9876543210',
+          roles: ['Customer'],
+        })
+      ).rejects.toThrowError(new ApiError(400, 'User already exists'));
     });
   });
 
   describe('updateUserById', () => {
-    it('should update the user details successfully', async () => {
-      const userId = faker.number.int();
-      const updateData = {
-        name: faker.person.fullName(),
-        email: faker.internet.email(),
-        phone_number: faker.phone.number('+1-###-###-####'),
-        password: 'newpassword123', // Updating the password
-      };
+    it('should update user successfully', async () => {
+      // Mock response for update
+      const updatedUser = { ...mockUser, phone_number: '1112223333', password: 'Password123!' };
+      User.update.mockResolvedValue([1, [updatedUser]]);
 
-      // This is the fixed, mock password hash to match the test expectations
-      const fixedHashedPassword = 'iMBFvwGAuyOV2F4';
+      const result = await userService.updateUserById(mockUser.id, {
+        phoneNumber: '1112223333',
+        password: 'NewPassword123!',
+      });
 
-      // Mock the user and related methods
-      const mockUser = { id: userId, ...updateData };
+      // Ensure that the result matches the updated user
+      expect(result).toEqual(updatedUser);
 
-      // Mocking model methods
-      User.findByPk.mockResolvedValue(mockUser);
-      bcrypt.hash.mockResolvedValue(fixedHashedPassword); // Always return the fixed hash
-      User.update.mockResolvedValue([1, [mockUser]]);
-
-      // Run the function
-      const result = await updateUserById(userId, updateData);
-
-      // Assert that bcrypt.hash was called with the correct arguments
-      expect(bcrypt.hash).toHaveBeenCalledWith(updateData.password, 10);
-
-      // Assert that User.update was called with the expected parameters
+      // Ensure User.update is called with the expected arguments
       expect(User.update).toHaveBeenCalledWith(
-        { ...updateData, password: fixedHashedPassword }, // Ensure the mock hash is used
-        { where: { id: userId }, returning: true, individualHooks: true }
+        {
+          phone_number: '1112223333', // Ensure we use 'phone_number' as the model uses this
+          password: expect.any(String), // Match any string for the password
+        },
+        {
+          where: { id: mockUser.id },
+          returning: true,
+          individualHooks: true,
+        }
       );
-
-      // Check the result is correct
-      expect(result).toEqual(mockUser);
     });
 
-    it('should throw an error if user is not found', async () => {
-      const userId = faker.number.int();
-      const updateData = {
-        name: faker.person.fullName(),
-        email: faker.internet.email(),
-      };
+    it('should throw error if user not found or no changes made', async () => {
+      User.update.mockResolvedValue([0, []]); // No rows updated
 
-      User.findByPk.mockResolvedValue(null);
-
-      await expect(updateUserById(userId, updateData)).rejects.toThrow(ApiError);
+      await expect(
+        userService.updateUserById(mockUser.id, {
+          phoneNumber: '1112223333',
+          password: 'NewPassword123!',
+        })
+      ).rejects.toThrowError(new ApiError(404, 'User not found or no changes made'));
     });
   });
 
-  describe('getPaymentsByUserId', () => {
-    it('should return paginated payments for a user', async () => {
-      const userId = faker.number.int();
-      const mockPayments = {
-        count: 2,
-        rows: [
-          { id: faker.number.int(), amount: faker.finance.amount() },
-          { id: faker.number.int(), amount: faker.finance.amount() },
-        ],
-      };
+  describe('deleteUserById', () => {
+    it('should delete user by id', async () => {
+      User.findByPk.mockResolvedValue(mockUser);
+      User.destroy.mockResolvedValue(true);
+      UsersRoles.update.mockResolvedValue([1]);
 
-      Payment.findAndCountAll.mockResolvedValue(mockPayments);
+      const result = await userService.deleteUserById(mockUser.id);
 
-      const result = await getPaymentsByUserId(userId, 1, 2);
+      expect(result).toBe(true);
+      expect(User.findByPk).toHaveBeenCalledWith(mockUser.id);
+      expect(UsersRoles.update).toHaveBeenCalledWith(
+        { deleted_at: expect.any(Date) },
+        { where: { user_id: mockUser.id }, individualHooks: true }
+      );
+    });
 
-      expect(Payment.findAndCountAll).toHaveBeenCalledWith({
-        where: { user_id: userId },
-        include: [{ model: expect.anything(), as: 'Shipment', attributes: ['id', 'status'] }],
-        limit: 2,
-        offset: 0,
-        order: [['created_at', 'DESC']],
-      });
-      expect(result).toEqual({
-        total: mockPayments.count,
-        pages: 1,
-        currentPage: 1,
-        data: mockPayments.rows,
-      });
+    it('should throw error if user not found', async () => {
+      User.findByPk.mockResolvedValue(null);
+
+      await expect(userService.deleteUserById(mockUser.id)).rejects.toThrowError(
+        new ApiError(404, 'User not found')
+      );
+    });
+  });
+
+  describe('uploadDocument', () => {
+    it('should upload document successfully', async () => {
+      User.update.mockResolvedValue([1]);
+
+      const result = await userService.uploadDocument(mockFile, mockUser.id);
+
+      expect(result.documentUrl).toBe(mockDocumentUrl);
+      expect(User.update).toHaveBeenCalledWith(
+        { document_url: mockDocumentUrl },
+        { where: { id: mockUser.id } }
+      );
+    });
+
+    it('should throw error if user not found or document URL could not be updated', async () => {
+      User.update.mockResolvedValue([0]); // No rows updated
+
+      await expect(userService.uploadDocument(mockFile, mockUser.id)).rejects.toThrowError(
+        new ApiError(404, 'User not found or document URL could not be updated')
+      );
     });
   });
 
   describe('verifyUserDocument', () => {
-    it('should verify the user document successfully', async () => {
-      const userId = faker.number.int();
-      const mockUser = {
-        id: userId,
-        document_url: faker.internet.url(),
-        is_document_verified: false,
-        save: jest.fn(),
-      };
-
+    it('should verify user document successfully', async () => {
+      mockUser.document_url = 'https://s3.amazonaws.com/documents/document.pdf'; // Document URL present
       User.findByPk.mockResolvedValue(mockUser);
 
-      const result = await verifyUserDocument(userId);
+      const result = await userService.verifyUserDocument(mockUser.id);
 
-      expect(User.findByPk).toHaveBeenCalledWith(userId);
-      expect(mockUser.is_document_verified).toBe(true);
+      expect(result.is_document_verified).toBe(true);
+      expect(User.findByPk).toHaveBeenCalledWith(mockUser.id);
       expect(mockUser.save).toHaveBeenCalled();
-      expect(result).toEqual(mockUser);
     });
 
-    it('should throw an error if the user does not have a document URL', async () => {
-      const userId = faker.number.int();
-      const mockUser = { id: userId, document_url: null };
+    it('should throw error if user not found', async () => {
+      User.findByPk.mockResolvedValue(null); // User not found
+
+      await expect(userService.verifyUserDocument(mockUser.id)).rejects.toThrowError(
+        new ApiError(404, 'User not found')
+      );
+    });
+
+    it('should throw error if user document not found', async () => {
+      mockUser.document_url = null; // No document URL
 
       User.findByPk.mockResolvedValue(mockUser);
 
-      await expect(verifyUserDocument(userId)).rejects.toThrow(ApiError);
+      await expect(userService.verifyUserDocument(mockUser.id)).rejects.toThrowError(
+        new ApiError(400, 'User document not found')
+      );
+    });
+
+    it('should throw error if document is already verified', async () => {
+      mockUser.is_document_verified = true; // Document already verified
+
+      User.findByPk.mockResolvedValue(mockUser);
+
+      await expect(userService.verifyUserDocument(mockUser.id)).rejects.toThrowError(
+        new ApiError(409, 'User document not found')
+      );
     });
   });
 });

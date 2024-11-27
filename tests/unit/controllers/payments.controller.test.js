@@ -4,28 +4,18 @@ const {
   getPayments,
   completeCODPayment,
 } = require('../../../src/controllers/payments.controller');
+
 const paymentService = require('../../../src/services/payments.service');
 const { ApiError } = require('../../../src/helpers/response.helper');
 
 jest.mock('../../../src/services/payments.service');
 
-describe('Payments Controller', () => {
+describe('Payment Controller', () => {
   let mockReq, mockRes, mockNext;
 
   beforeEach(() => {
-    mockReq = {
-      params: {},
-      body: {},
-      query: {},
-      user: {},
-    };
-
-    mockRes = {
-      data: null,
-      message: '',
-      statusCode: 200,
-    };
-
+    mockReq = { params: {}, query: {}, body: {}, user: {} };
+    mockRes = { data: null, message: null, statusCode: null };
     mockNext = jest.fn();
   });
 
@@ -39,11 +29,12 @@ describe('Payments Controller', () => {
       const mockPayment = { id: '1', amount: 100, status: 'Pending' };
       paymentService.createPayment.mockResolvedValue(mockPayment);
 
-      mockReq.body = { amount: 100, method: 'Card' };
+      mockReq.body = { amount: 100 };
       mockReq.user = { id: 'user1' };
 
       await createPayment(mockReq, mockRes, mockNext);
 
+      expect(paymentService.createPayment).toHaveBeenCalledWith(mockReq.body, mockReq.user);
       expect(mockRes.data).toEqual(mockPayment);
       expect(mockRes.message).toBe('Payment created successfully');
       expect(mockRes.statusCode).toBe(201);
@@ -51,20 +42,22 @@ describe('Payments Controller', () => {
     });
 
     it('should handle errors during payment creation', async () => {
-      paymentService.createPayment.mockRejectedValue(new Error('Error creating payment'));
-
-      mockReq.body = { amount: 100, method: 'Card' };
-      mockReq.user = { id: 'user1' };
+      const errorMessage = 'Invalid payment details';
+      paymentService.createPayment.mockRejectedValue(new Error(errorMessage));
 
       await createPayment(mockReq, mockRes, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
+      const error = mockNext.mock.calls[0][0];
+      expect(error).toBeInstanceOf(ApiError);
+      expect(error.statusCode).toBe(400);
+      expect(error.message).toBe(errorMessage);
     });
   });
 
   // Test: getPaymentById
   describe('getPaymentById', () => {
-    it('should retrieve payment by ID successfully', async () => {
+    it('should retrieve a payment successfully', async () => {
       const mockPayment = { id: '1', amount: 100, status: 'Completed' };
       paymentService.getPaymentById.mockResolvedValue(mockPayment);
 
@@ -73,12 +66,13 @@ describe('Payments Controller', () => {
 
       await getPaymentById(mockReq, mockRes, mockNext);
 
+      expect(paymentService.getPaymentById).toHaveBeenCalledWith(mockReq.params.id, mockReq.user);
       expect(mockRes.data).toEqual(mockPayment);
       expect(mockRes.message).toBe('Payment details retrieved successfully');
       expect(mockNext).toHaveBeenCalledWith();
     });
 
-    it('should handle errors when payment is not found', async () => {
+    it('should handle errors when the payment is not found', async () => {
       paymentService.getPaymentById.mockResolvedValue(null);
 
       mockReq.params.id = '1';
@@ -87,75 +81,85 @@ describe('Payments Controller', () => {
       await getPaymentById(mockReq, mockRes, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
+      const error = mockNext.mock.calls[0][0];
+      expect(error).toBeInstanceOf(ApiError);
+      expect(error.statusCode).toBe(404);
+      expect(error.message).toBe('Payment not found');
     });
 
-    it('should handle errors during payment retrieval', async () => {
-      paymentService.getPaymentById.mockRejectedValue(new Error('Error retrieving payment'));
-
-      mockReq.params.id = '1';
-      mockReq.user = { id: 'user1' };
+    it('should handle unexpected errors', async () => {
+      const errorMessage = 'Database error';
+      paymentService.getPaymentById.mockRejectedValue(new Error(errorMessage));
 
       await getPaymentById(mockReq, mockRes, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
+      const error = mockNext.mock.calls[0][0];
+      expect(error).toBeInstanceOf(ApiError);
+      expect(error.statusCode).toBe(400);
+      expect(error.message).toBe(errorMessage);
     });
   });
 
   // Test: getPayments
   describe('getPayments', () => {
-    it('should retrieve a list of payments successfully', async () => {
-      const mockPayments = [{ id: '1', amount: 100, status: 'Completed' }];
+    it('should retrieve payments successfully', async () => {
+      const mockPayments = [{ id: '1' }, { id: '2' }];
       paymentService.getPayments.mockResolvedValue(mockPayments);
 
-      mockReq.query.page = '1';
-      mockReq.query.limit = '10';
-      mockReq.user = { id: 'user1', Roles: [{ name: 'User' }] };
+      mockReq.query = { page: 1, limit: 10 };
+      mockReq.user = { id: 'user1' };
 
       await getPayments(mockReq, mockRes, mockNext);
 
+      expect(paymentService.getPayments).toHaveBeenCalledWith(mockReq.query, mockReq.user);
       expect(mockRes.data).toEqual(mockPayments);
       expect(mockRes.message).toBe('Payments retrieved successfully');
       expect(mockNext).toHaveBeenCalledWith();
     });
 
-    it('should handle errors during payment retrieval', async () => {
-      paymentService.getPayments.mockRejectedValue(new Error('Error retrieving payments'));
-
-      mockReq.query.page = '1';
-      mockReq.query.limit = '10';
-      mockReq.user = { id: 'user1', Roles: [{ name: 'User' }] };
+    it('should handle errors during payments retrieval', async () => {
+      const errorMessage = 'Error retrieving payments';
+      paymentService.getPayments.mockRejectedValue(new Error(errorMessage));
 
       await getPayments(mockReq, mockRes, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
+      const error = mockNext.mock.calls[0][0];
+      expect(error).toBeInstanceOf(ApiError);
+      expect(error.statusCode).toBe(400);
+      expect(error.message).toBe(errorMessage);
     });
   });
 
   // Test: completeCODPayment
   describe('completeCODPayment', () => {
-    it('should complete COD payment successfully', async () => {
-      const mockPayment = { id: '1', amount: 100, status: 'Completed' };
-      paymentService.completeCODPayment.mockResolvedValue(mockPayment);
+    it('should update COD payment status successfully', async () => {
+      const mockUpdatedPayment = { id: '1', status: 'Completed' };
+      paymentService.completeCODPayment.mockResolvedValue(mockUpdatedPayment);
 
       mockReq.params.id = '1';
       mockReq.user = { id: 'user1' };
 
       await completeCODPayment(mockReq, mockRes, mockNext);
 
-      expect(mockRes.data).toEqual(mockPayment);
+      expect(paymentService.completeCODPayment).toHaveBeenCalledWith(mockReq.params.id, mockReq.user);
+      expect(mockRes.data).toEqual(mockUpdatedPayment);
       expect(mockRes.message).toBe('Payment status updated successfully');
       expect(mockNext).toHaveBeenCalledWith();
     });
 
-    it('should handle errors during COD payment completion', async () => {
-      paymentService.completeCODPayment.mockRejectedValue(new Error('Error completing COD payment'));
-
-      mockReq.params.id = '1';
-      mockReq.user = { id: 'user1' };
+    it('should handle errors during COD payment update', async () => {
+      const errorMessage = 'Error updating payment status';
+      paymentService.completeCODPayment.mockRejectedValue(new Error(errorMessage));
 
       await completeCODPayment(mockReq, mockRes, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
+      const error = mockNext.mock.calls[0][0];
+      expect(error).toBeInstanceOf(ApiError);
+      expect(error.statusCode).toBe(400);
+      expect(error.message).toBe(errorMessage);
     });
   });
 });

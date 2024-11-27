@@ -5,9 +5,7 @@ const {
   getShipmentStatuses,
   updateShipment,
   deleteShipment,
-  updateShipmentStatus,
-  assignDeliveryAgent,
-  rescheduleShipment,
+  updateShipmentThroughAction,
 } = require('../../../src/controllers/shipments.controller');
 
 const { ApiError } = require('../../../src/helpers/response.helper');
@@ -31,11 +29,11 @@ describe('Shipment Controller', () => {
   // Test: createShipment
   describe('createShipment', () => {
     it('should create a shipment successfully', async () => {
-      const mockShipment = { id: '1', name: 'Shipment 1' };
+      const mockShipment = { id: '1', name: 'New Shipment' };
       shipmentService.createShipment.mockResolvedValue(mockShipment);
 
-      mockReq.body = { name: 'Shipment 1' };
-      mockReq.user.id = 'user1';
+      mockReq.body = { name: 'New Shipment' };
+      mockReq.user.id = 'user123';
 
       await createShipment(mockReq, mockRes, mockNext);
 
@@ -69,7 +67,7 @@ describe('Shipment Controller', () => {
       expect(mockNext).toHaveBeenCalledWith();
     });
 
-    it('should handle errors during retrieval of shipments', async () => {
+    it('should handle errors during retrieval', async () => {
       shipmentService.getShipments.mockRejectedValue(new Error('Error retrieving shipments'));
 
       await getShipments(mockReq, mockRes, mockNext);
@@ -95,8 +93,6 @@ describe('Shipment Controller', () => {
 
     it('should handle errors when shipment is not found', async () => {
       shipmentService.getShipmentById.mockResolvedValue(null);
-
-      mockReq.params.id = '1';
 
       await getShipmentById(mockReq, mockRes, mockNext);
 
@@ -155,9 +151,6 @@ describe('Shipment Controller', () => {
     it('should handle errors when updating a non-existent shipment', async () => {
       shipmentService.updateShipment.mockResolvedValue(null);
 
-      mockReq.params.id = '1';
-      mockReq.body = { name: 'Updated Shipment' };
-
       await updateShipment(mockReq, mockRes, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
@@ -177,8 +170,6 @@ describe('Shipment Controller', () => {
     it('should delete a shipment successfully', async () => {
       shipmentService.deleteShipment.mockResolvedValue(true);
 
-      mockReq.params.id = '1';
-
       await deleteShipment(mockReq, mockRes, mockNext);
 
       expect(mockRes.message).toBe('Shipment deleted successfully');
@@ -187,8 +178,6 @@ describe('Shipment Controller', () => {
 
     it('should handle errors when shipment is not found', async () => {
       shipmentService.deleteShipment.mockResolvedValue(false);
-
-      mockReq.params.id = '1';
 
       await deleteShipment(mockReq, mockRes, mockNext);
 
@@ -204,139 +193,26 @@ describe('Shipment Controller', () => {
     });
   });
 
-  // Test: updateShipmentStatus
-  describe('updateShipmentStatus', () => {
-    it('should update the shipment status successfully', async () => {
-      const mockUpdatedShipment = { id: '1', status: 'Delivered' };
-      shipmentService.updateShipmentStatus.mockResolvedValue(mockUpdatedShipment);
+  // Test: updateShipmentThroughAction
+  describe('updateShipmentThroughAction', () => {
+    it('should perform an action on a shipment successfully', async () => {
+      const mockResult = {
+        shipment: { id: '1', status: 'Delivered' },
+        message: 'Action performed successfully',
+      };
+      shipmentService.performActionOnShipment.mockResolvedValue(mockResult);
 
-      mockReq.params.id = '1';
-      mockReq.body = { status: 'Delivered' };
+      await updateShipmentThroughAction(mockReq, mockRes, mockNext);
 
-      await updateShipmentStatus(mockReq, mockRes, mockNext);
-
-      expect(mockRes.data).toEqual(mockUpdatedShipment);
-      expect(mockRes.message).toBe('Shipment status updated successfully');
+      expect(mockRes.data).toEqual(mockResult.shipment);
+      expect(mockRes.message).toBe(mockResult.message);
       expect(mockNext).toHaveBeenCalledWith();
     });
 
-    it('should handle errors when shipment is not found', async () => {
-      shipmentService.updateShipmentStatus.mockResolvedValue(null);
+    it('should handle errors when action fails', async () => {
+      shipmentService.performActionOnShipment.mockRejectedValue(new Error('Error performing action'));
 
-      mockReq.params.id = '1';
-      mockReq.body = { status: 'Delivered' };
-
-      await updateShipmentStatus(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
-    });
-
-    it('should handle errors during shipment status update', async () => {
-      shipmentService.updateShipmentStatus.mockRejectedValue(new Error('Error updating status'));
-
-      mockReq.params.id = '1';
-      mockReq.body = { status: 'Delivered' };
-
-      await updateShipmentStatus(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
-    });
-  });
-
-  // Test: assignDeliveryAgent
-  describe('assignDeliveryAgent', () => {
-    it('should assign a delivery agent successfully', async () => {
-      const mockUpdatedShipment = { id: '1', deliveryAgentId: 'agent123' };
-      shipmentService.assignDeliveryAgent.mockResolvedValue(mockUpdatedShipment);
-
-      mockReq.params.id = '1';
-      mockReq.body = { delivery_agent_id: 'agent123' };
-
-      await assignDeliveryAgent(mockReq, mockRes, mockNext);
-
-      expect(mockRes.data).toEqual(mockUpdatedShipment);
-      expect(mockRes.message).toBe('Delivery agent assigned successfully');
-      expect(mockNext).toHaveBeenCalledWith();
-    });
-
-    it('should handle errors when shipment is not found', async () => {
-      shipmentService.assignDeliveryAgent.mockResolvedValue(null);
-
-      mockReq.params.id = '1';
-      mockReq.body = { delivery_agent_id: 'agent123' };
-
-      await assignDeliveryAgent(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
-    });
-
-    it('should handle errors during assignment', async () => {
-      shipmentService.assignDeliveryAgent.mockRejectedValue(new Error('Error assigning agent'));
-
-      mockReq.params.id = '1';
-      mockReq.body = { delivery_agent_id: 'agent123' };
-
-      await assignDeliveryAgent(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
-    });
-  });
-
-  // Test: rescheduleShipment
-  describe('rescheduleShipment', () => {
-    it('should reschedule a shipment successfully', async () => {
-      const mockUpdatedShipment = { id: '1', preferredDeliveryDate: '2024-12-01' };
-      shipmentService.rescheduleShipment.mockResolvedValue(mockUpdatedShipment);
-
-      mockReq.params.id = '1';
-      mockReq.body = {
-        preferred_delivery_date: '2024-12-01',
-        preferred_delivery_time: '10:00 AM',
-      };
-      mockReq.user = {
-        id: 'user1',
-        Roles: [{ name: 'Customer' }],
-      };
-
-      await rescheduleShipment(mockReq, mockRes, mockNext);
-
-      expect(mockRes.data).toEqual(mockUpdatedShipment);
-      expect(mockRes.message).toBe('Delivery rescheduled successfully');
-      expect(mockNext).toHaveBeenCalledWith();
-    });
-
-    it('should handle errors when shipment is not found', async () => {
-      shipmentService.rescheduleShipment.mockResolvedValue(null);
-
-      mockReq.params.id = '1';
-      mockReq.body = {
-        preferred_delivery_date: '2024-12-01',
-        preferred_delivery_time: '10:00 AM',
-      };
-      mockReq.user = {
-        id: 'user1',
-        Roles: [{ name: 'Customer' }],
-      };
-
-      await rescheduleShipment(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
-    });
-
-    it('should handle errors during rescheduling', async () => {
-      shipmentService.rescheduleShipment.mockRejectedValue(new Error('Error rescheduling shipment'));
-
-      mockReq.params.id = '1';
-      mockReq.body = {
-        preferred_delivery_date: '2024-12-01',
-        preferred_delivery_time: '10:00 AM',
-      };
-      mockReq.user = {
-        id: 'user1',
-        Roles: [{ name: 'Customer' }],
-      };
-
-      await rescheduleShipment(mockReq, mockRes, mockNext);
+      await updateShipmentThroughAction(mockReq, mockRes, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
     });
