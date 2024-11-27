@@ -1,9 +1,9 @@
 const { Model, DataTypes } = require('sequelize');
 
 module.exports = sequelize => {
-  class UsersRoles extends Model {}
+  class UserRole extends Model {}
 
-  UsersRoles.init(
+  UserRole.init(
     {
       id: {
         type: DataTypes.UUID,
@@ -29,7 +29,7 @@ module.exports = sequelize => {
     },
     {
       sequelize,
-      modelName: 'UsersRoles',
+      modelName: 'UserRole',
       tableName: 'users_roles',
       timestamps: true,
       paranoid: true,
@@ -39,5 +39,5 @@ module.exports = sequelize => {
     }
   );
 
-  return UsersRoles;
+  return UserRole;
 };

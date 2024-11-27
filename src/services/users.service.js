@@ -1,4 +1,4 @@
-const { User, Role, UsersRoles, Payment, Shipment, Status } = require('../models');
+const { User, Role, UserRole, Payment, Shipment, Status } = require('../models');
 const { uploadFileToS3 } = require('../helpers/aws.helper');
 const bcrypt = require('bcryptjs');
 const { ApiError } = require('../helpers/response.helper');
@@ -165,7 +165,7 @@ const deleteUserById = async userId => {
 
   await user.destroy();
 
-  await UsersRoles.update(
+  await UserRole.update(
     { deleted_at: new Date() },
     {
       where: { user_id: userId },
