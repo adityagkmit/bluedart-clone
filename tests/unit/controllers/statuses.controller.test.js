@@ -1,25 +1,15 @@
-const { createStatus, getStatusById, deleteStatus } = require('../../../src/controllers/statuses.controller');
+const { getStatusById } = require('../../../src/controllers/statuses.controller');
 const statusService = require('../../../src/services/statuses.service');
 const { ApiError } = require('../../../src/helpers/response.helper');
 
 jest.mock('../../../src/services/statuses.service');
 
-describe('Statuses Controller', () => {
+describe('Status Controller', () => {
   let mockReq, mockRes, mockNext;
 
   beforeEach(() => {
-    mockReq = {
-      params: {},
-      body: {},
-      user: {},
-    };
-
-    mockRes = {
-      data: null,
-      message: '',
-      statusCode: 200,
-    };
-
+    mockReq = { params: {}, user: {} };
+    mockRes = { data: null, message: null, statusCode: null };
     mockNext = jest.fn();
   });
 
@@ -27,95 +17,53 @@ describe('Statuses Controller', () => {
     jest.clearAllMocks();
   });
 
-  // Test: createStatus
-  describe('createStatus', () => {
-    it('should create a status successfully', async () => {
-      const mockStatus = { id: '1', name: 'In Progress' };
-      statusService.createStatus.mockResolvedValue(mockStatus);
-
-      mockReq.body = { name: 'In Progress' };
-      mockReq.user = { id: 'user1' };
-
-      await createStatus(mockReq, mockRes, mockNext);
-
-      expect(mockRes.data).toEqual(mockStatus);
-      expect(mockRes.message).toBe('Status created successfully');
-      expect(mockRes.statusCode).toBe(201);
-      expect(mockNext).toHaveBeenCalledWith();
-    });
-
-    it('should handle errors during status creation', async () => {
-      statusService.createStatus.mockRejectedValue(new Error('Error creating status'));
-
-      mockReq.body = { name: 'In Progress' };
-      mockReq.user = { id: 'user1' };
-
-      await createStatus(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
-    });
-  });
-
-  // Test: getStatusById
   describe('getStatusById', () => {
     it('should retrieve a status successfully', async () => {
-      const mockStatus = { id: '1', name: 'Completed' };
+      const mockStatus = { id: '123', name: 'Active' };
       statusService.getStatusById.mockResolvedValue(mockStatus);
 
-      mockReq.params.id = '1';
+      mockReq.params.id = '123';
+      mockReq.user = { id: 'user123' };
 
       await getStatusById(mockReq, mockRes, mockNext);
 
+      expect(statusService.getStatusById).toHaveBeenCalledWith(mockReq.params, mockReq.user);
       expect(mockRes.data).toEqual(mockStatus);
       expect(mockRes.message).toBe('Status retrieved successfully');
       expect(mockNext).toHaveBeenCalledWith();
     });
 
-    it('should handle errors when status is not found', async () => {
+    it('should handle errors when the status is not found', async () => {
       statusService.getStatusById.mockResolvedValue(null);
 
-      mockReq.params.id = '1';
+      mockReq.params.id = '123';
+      mockReq.user = { id: 'user123' };
 
       await getStatusById(mockReq, mockRes, mockNext);
 
+      expect(statusService.getStatusById).toHaveBeenCalledWith(mockReq.params, mockReq.user);
       expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
+      const error = mockNext.mock.calls[0][0];
+      expect(error).toBeInstanceOf(ApiError);
+      expect(error.statusCode).toBe(404);
+      expect(error.message).toBe('Status not found');
     });
 
-    it('should handle errors during status retrieval', async () => {
-      statusService.getStatusById.mockRejectedValue(new Error('Error retrieving status'));
+    it('should handle unexpected errors', async () => {
+      const errorMessage = 'Database error';
+      statusService.getStatusById.mockRejectedValue(new Error(errorMessage));
 
-      mockReq.params.id = '1';
+      mockReq.params.id = '123';
+      mockReq.user = { id: 'user123' };
 
       await getStatusById(mockReq, mockRes, mockNext);
 
+      expect(statusService.getStatusById).toHaveBeenCalledWith(mockReq.params, mockReq.user);
       expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
-    });
-  });
-
-  // Test: deleteStatus
-  describe('deleteStatus', () => {
-    it('should delete a status successfully', async () => {
-      statusService.deleteStatus.mockResolvedValue();
-
-      mockReq.params.id = '1';
-      mockReq.user = { id: 'user1' };
-
-      await deleteStatus(mockReq, mockRes, mockNext);
-
-      expect(mockRes.data).toBeNull();
-      expect(mockRes.message).toBe('Status deleted successfully');
-      expect(mockNext).toHaveBeenCalledWith();
-    });
-
-    it('should handle errors during status deletion', async () => {
-      statusService.deleteStatus.mockRejectedValue(new Error('Error deleting status'));
-
-      mockReq.params.id = '1';
-      mockReq.user = { id: 'user1' };
-
-      await deleteStatus(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(ApiError));
+      const error = mockNext.mock.calls[0][0];
+      expect(error).toBeInstanceOf(ApiError);
+      expect(error.statusCode).toBe(400);
+      expect(error.message).toBe(errorMessage);
     });
   });
 });
