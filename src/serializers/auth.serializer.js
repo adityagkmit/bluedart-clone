@@ -1,6 +1,6 @@
 const { toCamelCase } = require('../helpers/serializer.helper');
 
-const serializeAuthResponse = (req, res, next) => {
+const authSerializer = (req, res, next) => {
   if (!res.data) return next();
 
   const data = res.data;
@@ -40,5 +40,5 @@ const serializeAuthResponse = (req, res, next) => {
 };
 
 module.exports = {
-  serializeAuthResponse,
+  authSerializer,
 };
