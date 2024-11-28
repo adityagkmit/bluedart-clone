@@ -6,9 +6,8 @@ const checkDocumentVerification = require('../middlewares/document.middleware');
 const reportController = require('../controllers/reports.controller');
 const { shipmentReportSchema, customerReportSchema } = require('../validators/reports.validator');
 const { ADMIN, CUSTOMER } = require('../constants/roles');
-const responseHandler = require('../middlewares/response.middleware');
+const { responseHandler } = require('../helpers/response.helper');
 const reportsSerializer = require('../serializers/reports.serializer');
-const applySerializer = require('../middlewares/serializer.middleware');
 
 const router = express.Router();
 
@@ -19,7 +18,7 @@ router.post(
   roles([ADMIN]),
   validate(shipmentReportSchema),
   reportController.generateShipmentReport,
-  applySerializer(reportsSerializer),
+  reportsSerializer,
   responseHandler
 );
 
@@ -31,7 +30,7 @@ router.post(
   roles([CUSTOMER]),
   validate(customerReportSchema),
   reportController.generateCustomerReport,
-  applySerializer(reportsSerializer),
+  reportsSerializer,
   responseHandler
 );
 

@@ -9,10 +9,9 @@ const { ADMIN, CUSTOMER, DELIVERYAGENT } = require('../constants/roles');
 const paginationSchema = require('../validators/pagination.validator');
 const upload = require('../middlewares/multer.middleware');
 const { userSerializer } = require('../serializers/users.serializer');
-const applySerializer = require('../middlewares/serializer.middleware');
-const responseHandler = require('../middlewares/response.middleware');
+const { responseHandler } = require('../helpers/response.helper');
 
-router.get('/me', auth, userController.getCurrentUser, applySerializer(userSerializer), responseHandler);
+router.get('/me', auth, userController.getCurrentUser, userSerializer, responseHandler);
 
 router.get(
   '/',
@@ -20,7 +19,7 @@ router.get(
   roles([ADMIN]),
   validate(paginationSchema, false, true),
   userController.getAllUsers,
-  applySerializer(userSerializer),
+  userSerializer,
   responseHandler
 );
 
@@ -30,7 +29,7 @@ router.post(
   roles([ADMIN]),
   validate(createUserSchema),
   userController.createUser,
-  applySerializer(userSerializer),
+  userSerializer,
   responseHandler
 );
 
@@ -39,7 +38,7 @@ router.get(
   auth,
   validate(userIdValidateSchema, true),
   userController.getUserById,
-  applySerializer(userSerializer),
+  userSerializer,
   responseHandler
 );
 
@@ -50,7 +49,7 @@ router.put(
   validate(updateUserSchema),
   validate(userIdValidateSchema, true),
   userController.updateUser,
-  applySerializer(userSerializer),
+  userSerializer,
   responseHandler
 );
 
@@ -60,7 +59,7 @@ router.delete(
   roles([ADMIN], true),
   validate(userIdValidateSchema, true),
   userController.deleteUser,
-  applySerializer(userSerializer),
+  userSerializer,
   responseHandler
 );
 
@@ -71,7 +70,7 @@ router.get(
   validate(userIdValidateSchema, true),
   validate(paginationSchema, false, true),
   userController.getUserShipments,
-  applySerializer(userSerializer),
+  userSerializer,
   responseHandler
 );
 
@@ -82,7 +81,7 @@ router.get(
   validate(userIdValidateSchema, true),
   validate(paginationSchema, false, true),
   userController.getUserPayments,
-  applySerializer(userSerializer),
+  userSerializer,
   responseHandler
 );
 
@@ -92,7 +91,7 @@ router.post(
   roles([CUSTOMER, DELIVERYAGENT]),
   upload.single('document'),
   userController.uploadDocument,
-  applySerializer(userSerializer),
+  userSerializer,
   responseHandler
 );
 
@@ -102,7 +101,7 @@ router.patch(
   roles([ADMIN]),
   validate(userIdValidateSchema, true),
   userController.verifyDocument,
-  applySerializer(userSerializer),
+  userSerializer,
   responseHandler
 );
 

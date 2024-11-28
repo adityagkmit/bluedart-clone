@@ -42,7 +42,12 @@ class ApiError extends Error {
   }
 }
 
+const responseHandler = (req, res) => {
+  ApiResponse.send(res, res.statusCode || 200, res.message || 'Success', res.data || null);
+};
+
 module.exports = {
   ApiResponse,
   ApiError,
+  responseHandler,
 };

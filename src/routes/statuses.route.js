@@ -6,9 +6,8 @@ const { auth } = require('../middlewares/auth.middleware');
 const { ADMIN, CUSTOMER, DELIVERYAGENT } = require('../constants/roles');
 const roles = require('../middlewares/role.middleware');
 const checkDocumentVerification = require('../middlewares/document.middleware');
-const responseHandler = require('../middlewares/response.middleware');
+const { responseHandler } = require('../helpers/response.helper');
 const statusesSerializer = require('../serializers/statuses.serializer');
-const applySerializer = require('../middlewares/serializer.middleware');
 
 const router = express.Router();
 
@@ -19,7 +18,7 @@ router.get(
   roles([ADMIN, DELIVERYAGENT, CUSTOMER]),
   validate(statusIdValidateSchema, true),
   statusController.getStatusById,
-  applySerializer(statusesSerializer),
+  statusesSerializer,
   responseHandler
 );
 

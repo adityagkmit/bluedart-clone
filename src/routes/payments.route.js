@@ -6,9 +6,8 @@ const { auth } = require('../middlewares/auth.middleware');
 const { ADMIN, CUSTOMER, DELIVERYAGENT } = require('../constants/roles');
 const roles = require('../middlewares/role.middleware');
 const checkDocumentVerification = require('../middlewares/document.middleware');
-const responseHandler = require('../middlewares/response.middleware');
+const { responseHandler } = require('../helpers/response.helper');
 const paymentsSerializer = require('../serializers/payments.serializer');
-const applySerializer = require('../middlewares/serializer.middleware');
 
 const router = express.Router();
 
@@ -19,7 +18,7 @@ router.post(
   roles([CUSTOMER]),
   validate(createPaymentSchema),
   paymentController.createPayment,
-  applySerializer(paymentsSerializer),
+  paymentsSerializer,
   responseHandler
 );
 
@@ -30,7 +29,7 @@ router.patch(
   roles([DELIVERYAGENT]),
   validate(paymentIdValidateSchema, true),
   paymentController.completeCODPayment,
-  applySerializer(paymentsSerializer),
+  paymentsSerializer,
   responseHandler
 );
 
@@ -41,7 +40,7 @@ router.get(
   roles([ADMIN, CUSTOMER, DELIVERYAGENT]),
   validate(paymentIdValidateSchema, true),
   paymentController.getPaymentById,
-  applySerializer(paymentsSerializer),
+  paymentsSerializer,
   responseHandler
 );
 
@@ -51,7 +50,7 @@ router.get(
   checkDocumentVerification,
   roles([ADMIN, CUSTOMER]),
   paymentController.getPayments,
-  applySerializer(paymentsSerializer),
+  paymentsSerializer,
   responseHandler
 );
 

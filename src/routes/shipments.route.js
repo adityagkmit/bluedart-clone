@@ -5,10 +5,9 @@ const validate = require('../middlewares/validator.middleware');
 const { auth } = require('../middlewares/auth.middleware');
 const roles = require('../middlewares/role.middleware');
 const checkDocumentVerification = require('../middlewares/document.middleware');
-const applySerializer = require('../middlewares/serializer.middleware');
 const { shipmentSerializer } = require('../serializers/shipments.serializer');
 const { ADMIN, CUSTOMER, DELIVERYAGENT } = require('../constants/roles');
-const responseHandler = require('../middlewares/response.middleware');
+const { responseHandler } = require('../helpers/response.helper');
 const {
   createShipmentSchema,
   shipmentIdValidateSchema,
@@ -26,7 +25,7 @@ router.post(
   roles([CUSTOMER]),
   validate(createShipmentSchema),
   shipmentController.createShipment,
-  applySerializer(shipmentSerializer),
+  shipmentSerializer,
   responseHandler
 );
 
@@ -37,7 +36,7 @@ router.get(
   checkDocumentVerification,
   roles([ADMIN]),
   shipmentController.getShipments,
-  applySerializer(shipmentSerializer),
+  shipmentSerializer,
   responseHandler
 );
 
@@ -49,7 +48,7 @@ router.get(
   roles([ADMIN, DELIVERYAGENT, CUSTOMER]),
   validate(shipmentIdValidateSchema, true),
   shipmentController.getShipmentById,
-  applySerializer(shipmentSerializer),
+  shipmentSerializer,
   responseHandler
 );
 
@@ -61,7 +60,7 @@ router.get(
   roles([ADMIN, DELIVERYAGENT, CUSTOMER]),
   validate(shipmentIdValidateSchema, true),
   shipmentController.getShipmentStatuses,
-  applySerializer(shipmentSerializer),
+  shipmentSerializer,
   responseHandler
 );
 
@@ -74,7 +73,7 @@ router.put(
   validate(shipmentIdValidateSchema, true),
   validate(updateShipmentSchema),
   shipmentController.updateShipment,
-  applySerializer(shipmentSerializer),
+  shipmentSerializer,
   responseHandler
 );
 
@@ -86,7 +85,7 @@ router.delete(
   roles([ADMIN, CUSTOMER], true),
   validate(shipmentIdValidateSchema, true),
   shipmentController.deleteShipment,
-  applySerializer(shipmentSerializer),
+  shipmentSerializer,
   responseHandler
 );
 
@@ -98,7 +97,7 @@ router.patch(
   validate(shipmentIdValidateSchema, true),
   validate(unifiedShipmentSchema),
   shipmentController.updateShipmentThroughAction,
-  applySerializer(shipmentSerializer),
+  shipmentSerializer,
   responseHandler
 );
 
